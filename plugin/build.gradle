@@ -24,9 +24,20 @@ dependencies {
         'lib/moneydance-devkit-5.1/lib/extadmin.jar'
     )
 
-    // We use JDK's built-in com.sun.net.httpserver.HttpServer for the HTTP layer
+    // We use JDK's built-in java.net.ServerSocket for the HTTP layer
     // and implement MCP JSON-RPC protocol directly — zero external dependencies.
     // This keeps the plugin tiny and avoids classloader conflicts inside Moneydance.
+
+    // Testing dependencies
+    testImplementation platform('org.junit:junit-bom:5.10.0')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+}
+
+test {
+    useJUnitPlatform()
+    testLogging {
+        events "passed", "skipped", "failed"
+    }
 }
 
 // Custom source set layout

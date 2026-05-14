@@ -1,28 +1,23 @@
 package com.moneydance.modules.features.mcpserver;
 
-import com.sun.net.httpserver.HttpServer;
-import com.sun.net.httpserver.HttpExchange;
-
-import java.io.IOException;
+import java.io.BufferedReader;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
-import java.net.InetSocketAddress;
+import java.net.InetAddress;
+import java.net.ServerSocket;
+import java.net.Socket;
 import java.nio.charset.StandardCharsets;
-import java.util.concurrent.Executors;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * Manages the lifecycle of an embedded HTTP server that speaks the
  * MCP (Model Context Protocol) JSON-RPC protocol.
  *
- * Uses JDK's built-in com.sun.net.httpserver.HttpServer — zero external
- * dependencies. The server binds to 127.0.0.1 only (localhost).
- *
- * MCP protocol subset implemented:
- *   - initialize (handshake)
- *   - tools/list (discover available tools)
- *   - tools/call (execute a tool)
- *   - ping (keepalive)
+ * Uses raw java.net.ServerSocket to avoid any dependencies on com.sun.net.httpserver
+ * which is often stripped from bundled JREs like Moneydance's.
+ * Binds to 127.0.0.1 only (localhost).
  */
 public class McpServerManager {
 
@@ -30,7 +25,7 @@ public class McpServerManager {
     private static final int PORT = 38867;
 
     private final Main extension;
-    private HttpServer httpServer;
+    private ServerSocket serverSocket;
     private ExecutorService executor;
     private volatile boolean running = false;
 
@@ -43,8 +38,7 @@ public class McpServerManager {
     }
 
     /**
-     * Start the HTTP server on localhost. 
-     * Runs in a background thread so it doesn't block the Moneydance EDT.
+     * Start the HTTP server on localhost.
      */
     public synchronized void start() {
         if (running) {
@@ -53,17 +47,16 @@ public class McpServerManager {
         }
 
         try {
-            executor = Executors.newFixedThreadPool(2);
-            httpServer = HttpServer.create(new InetSocketAddress(HOST, PORT), 0);
-            httpServer.createContext("/mcp", this::handleMcpRequest);
-            httpServer.createContext("/health", this::handleHealthCheck);
-            httpServer.setExecutor(executor);
-            httpServer.start();
+            serverSocket = new ServerSocket(PORT, 50, InetAddress.getByName(HOST));
+            executor = Executors.newFixedThreadPool(4);
             running = true;
+
+            // Start the accept loop in a new thread
+            new Thread(this::acceptLoop, "McpServer-Accept").start();
+
             Main.log("MCP server started on http://" + HOST + ":" + PORT + "/mcp");
-        } catch (IOException e) {
+        } catch (Exception e) {
             Main.log("Failed to start MCP server: " + e.getMessage());
-            e.printStackTrace(System.err);
             cleanup();
         }
     }
@@ -75,7 +68,6 @@ public class McpServerManager {
         if (!running) {
             return;
         }
-
         Main.log("Stopping MCP server...");
         cleanup();
         Main.log("MCP server stopped.");
@@ -87,66 +79,121 @@ public class McpServerManager {
 
     private void cleanup() {
         running = false;
-        if (httpServer != null) {
-            httpServer.stop(1); // 1 second grace period
-            httpServer = null;
+        try {
+            if (serverSocket != null && !serverSocket.isClosed()) {
+                serverSocket.close();
+            }
+        } catch (Exception e) {
+            // Ignore
         }
+        serverSocket = null;
+
         if (executor != null) {
             executor.shutdownNow();
             executor = null;
         }
     }
 
-    /**
-     * Handle MCP JSON-RPC requests on POST /mcp
-     */
-    private void handleMcpRequest(HttpExchange exchange) throws IOException {
-        // CORS headers for local development
-        exchange.getResponseHeaders().add("Access-Control-Allow-Origin", "*");
-        exchange.getResponseHeaders().add("Access-Control-Allow-Methods", "POST, OPTIONS");
-        exchange.getResponseHeaders().add("Access-Control-Allow-Headers", "Content-Type");
-
-        if ("OPTIONS".equalsIgnoreCase(exchange.getRequestMethod())) {
-            exchange.sendResponseHeaders(204, -1);
-            exchange.close();
-            return;
+    private void acceptLoop() {
+        while (running) {
+            try {
+                Socket clientSocket = serverSocket.accept();
+                executor.submit(() -> handleClient(clientSocket));
+            } catch (Exception e) {
+                if (running) {
+                    Main.log("Socket accept error: " + e.getMessage());
+                }
+            }
         }
-
-        if (!"POST".equalsIgnoreCase(exchange.getRequestMethod())) {
-            sendResponse(exchange, 405, "{\"error\": \"Method not allowed. Use POST.\"}");
-            return;
-        }
-
-        // Read request body
-        String requestBody;
-        try (InputStream is = exchange.getRequestBody()) {
-            requestBody = new String(is.readAllBytes(), StandardCharsets.UTF_8);
-        }
-
-        Main.log("Request: " + requestBody);
-
-        // Delegate to protocol handler
-        String responseBody = protocolHandler.handleRequest(requestBody);
-
-        Main.log("Response: " + responseBody);
-
-        sendResponse(exchange, 200, responseBody);
     }
 
-    /**
-     * Simple health check endpoint.
-     */
-    private void handleHealthCheck(HttpExchange exchange) throws IOException {
-        sendResponse(exchange, 200, "{\"status\": \"ok\"}");
+    private void handleClient(Socket socket) {
+        try (socket;
+             InputStream is = socket.getInputStream();
+             OutputStream os = socket.getOutputStream();
+             BufferedReader reader = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8))) {
+
+            // 1. Read Request Line
+            String requestLine = reader.readLine();
+            if (requestLine == null || requestLine.isEmpty()) return;
+
+            String[] parts = requestLine.split(" ");
+            if (parts.length < 2) return;
+            
+            String method = parts[0];
+            String path = parts[1];
+
+            // 2. Read Headers
+            int contentLength = 0;
+            String line;
+            while ((line = reader.readLine()) != null && !line.isEmpty()) {
+                if (line.toLowerCase().startsWith("content-length:")) {
+                    try {
+                        contentLength = Integer.parseInt(line.substring(15).trim());
+                    } catch (NumberFormatException ignored) {}
+                }
+            }
+
+            // 3. CORS Preflight
+            if ("OPTIONS".equalsIgnoreCase(method)) {
+                sendResponse(os, 204, "No Content", "application/json", "");
+                return;
+            }
+
+            // 4. Routing
+            if ("/health".equals(path)) {
+                sendResponse(os, 200, "OK", "application/json", "{\"status\": \"ok\"}");
+                return;
+            }
+
+            if (!"/mcp".equals(path)) {
+                sendResponse(os, 404, "Not Found", "application/json", "{\"error\": \"Not Found\"}");
+                return;
+            }
+
+            if (!"POST".equalsIgnoreCase(method)) {
+                sendResponse(os, 405, "Method Not Allowed", "application/json", "{\"error\": \"Method not allowed. Use POST.\"}");
+                return;
+            }
+
+            // 5. Read Body
+            char[] bodyChars = new char[contentLength];
+            int read = 0;
+            while (read < contentLength) {
+                int r = reader.read(bodyChars, read, contentLength - read);
+                if (r == -1) break;
+                read += r;
+            }
+            String requestBody = new String(bodyChars);
+
+            Main.log("Request: " + requestBody);
+
+            // 6. Handle Protocol
+            String responseBody = protocolHandler.handleRequest(requestBody);
+
+            Main.log("Response: " + responseBody);
+
+            // 7. Send Response
+            sendResponse(os, 200, "OK", "application/json", responseBody);
+
+        } catch (Exception e) {
+            Main.log("Error handling client request: " + e.getMessage());
+        }
     }
 
-    private void sendResponse(HttpExchange exchange, int statusCode, String body) throws IOException {
-        byte[] responseBytes = body.getBytes(StandardCharsets.UTF_8);
-        exchange.getResponseHeaders().add("Content-Type", "application/json");
-        exchange.sendResponseHeaders(statusCode, responseBytes.length);
-        try (OutputStream os = exchange.getResponseBody()) {
-            os.write(responseBytes);
-        }
-        exchange.close();
+    private void sendResponse(OutputStream os, int statusCode, String statusText, String contentType, String body) throws Exception {
+        byte[] bodyBytes = body.getBytes(StandardCharsets.UTF_8);
+        
+        String headers = "HTTP/1.1 " + statusCode + " " + statusText + "\r\n" +
+                "Content-Type: " + contentType + "\r\n" +
+                "Content-Length: " + bodyBytes.length + "\r\n" +
+                "Access-Control-Allow-Origin: *\r\n" +
+                "Access-Control-Allow-Methods: POST, OPTIONS\r\n" +
+                "Access-Control-Allow-Headers: Content-Type\r\n" +
+                "Connection: close\r\n\r\n";
+                
+        os.write(headers.getBytes(StandardCharsets.UTF_8));
+        os.write(bodyBytes);
+        os.flush();
     }
 }

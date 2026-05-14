@@ -9,7 +9,7 @@ public class McpProtocolHandlerTest {
 
     @Test
     void testHandlePing() {
-        McpProtocolHandler handler = new McpProtocolHandler(null, new ToolRegistry());
+        McpProtocolHandler handler = new McpProtocolHandler(null, new ToolRegistry(), new com.moneydance.modules.features.mcpserver.resources.ResourceRegistry());
         String request = "{\"jsonrpc\":\"2.0\",\"method\":\"ping\",\"id\":1}";
         String response = handler.handleRequest(request);
         
@@ -20,7 +20,7 @@ public class McpProtocolHandlerTest {
 
     @Test
     void testHandleInitialize() {
-        McpProtocolHandler handler = new McpProtocolHandler(null, new ToolRegistry());
+        McpProtocolHandler handler = new McpProtocolHandler(null, new ToolRegistry(), new com.moneydance.modules.features.mcpserver.resources.ResourceRegistry());
         String request = "{\"jsonrpc\":\"2.0\",\"method\":\"initialize\",\"id\":\"abc\"}";
         String response = handler.handleRequest(request);
         
@@ -31,7 +31,7 @@ public class McpProtocolHandlerTest {
 
     @Test
     void testHandleUnknownMethod() {
-        McpProtocolHandler handler = new McpProtocolHandler(null, new ToolRegistry());
+        McpProtocolHandler handler = new McpProtocolHandler(null, new ToolRegistry(), new com.moneydance.modules.features.mcpserver.resources.ResourceRegistry());
         String request = "{\"jsonrpc\":\"2.0\",\"method\":\"unknown\",\"id\":99}";
         String response = handler.handleRequest(request);
         
@@ -42,7 +42,7 @@ public class McpProtocolHandlerTest {
 
     @Test
     void testHandleNotification() {
-        McpProtocolHandler handler = new McpProtocolHandler(null, new ToolRegistry());
+        McpProtocolHandler handler = new McpProtocolHandler(null, new ToolRegistry(), new com.moneydance.modules.features.mcpserver.resources.ResourceRegistry());
         String request = "{\"jsonrpc\":\"2.0\",\"method\":\"notifications/initialized\"}";
         String response = handler.handleRequest(request);
         assertNotNull(response);

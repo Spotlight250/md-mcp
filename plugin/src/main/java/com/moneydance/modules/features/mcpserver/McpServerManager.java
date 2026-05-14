@@ -34,10 +34,12 @@ public class McpServerManager {
     // MCP protocol handler
     private final McpProtocolHandler protocolHandler;
     private final ToolRegistry toolRegistry;
+    private final com.moneydance.modules.features.mcpserver.resources.ResourceRegistry resourceRegistry;
 
     public McpServerManager(Main extension) {
         this.extension = extension;
         this.toolRegistry = new ToolRegistry();
+        this.resourceRegistry = new com.moneydance.modules.features.mcpserver.resources.ResourceRegistry();
         
         // Register core tools
         register(new PingTool("0.1.0"));
@@ -51,13 +53,23 @@ public class McpServerManager {
         register(new GetSecurityPricesTool());
         register(new GetSecurityPerformanceTool());
         register(new GetCurrenciesTool());
+
+        // Register Resources
+        registerResource(new com.moneydance.modules.features.mcpserver.resources.AccountHierarchyResource());
+        registerResource(new com.moneydance.modules.features.mcpserver.resources.SecurityMasterResource());
+        registerResource(new com.moneydance.modules.features.mcpserver.resources.CategoryListResource());
         
-        this.protocolHandler = new McpProtocolHandler(extension, toolRegistry);
+        this.protocolHandler = new McpProtocolHandler(extension, toolRegistry, resourceRegistry);
     }
 
     private void register(com.moneydance.modules.features.mcpserver.tools.McpTool tool) {
         McpLogger.log("Registering tool: " + tool.getName());
         this.toolRegistry.registerTool(tool);
+    }
+
+    private void registerResource(com.moneydance.modules.features.mcpserver.resources.McpResource resource) {
+        McpLogger.log("Registering resource: " + resource.getName());
+        this.resourceRegistry.registerResource(resource);
     }
 
     /**

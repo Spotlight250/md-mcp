@@ -6,6 +6,10 @@ import java.util.List;
 public class JsonArrayBuilder {
     private final List<String> elements = new ArrayList<>();
 
+    public int size() {
+        return elements.size();
+    }
+
     public JsonArrayBuilder add(String value) {
         elements.add("\"" + escape(value) + "\"");
         return this;

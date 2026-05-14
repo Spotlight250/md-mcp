@@ -41,11 +41,16 @@ The plugin implements a raw `java.net.ServerSocket` to handle HTTP POST requests
 - **Why?** Moneydance bundles a highly stripped-down custom Java Runtime. Standard classes like `com.sun.net.httpserver.HttpServer` are often missing. By using raw sockets, the plugin achieves **zero external dependencies** and avoids any ClassNotFound exceptions in the Moneydance JVM.
 - **Port:** The server binds exclusively to `127.0.0.1:38867`.
 
-### 2. Protocol: JSON-RPC (Manual Parsing)
-The plugin manually parses and formats the MCP JSON-RPC protocol strings.
-- **Why?** To prevent ClassLoader conflicts with Moneydance's internal libraries, we avoid pulling in heavy dependencies like Jackson or Gson.
+### 2. Infrastructure: Formatter-Isolate Pattern
+The plugin separates business logic from formatting.
+- **Why?** Testing code inside the Moneydance JVM is difficult. By extracting the retrieval logic into plain Java classes and the formatting into isolated "Formatter" classes, we can unit-test the entire pipeline (including complex ROI calculations) without needing a running Moneydance instance.
 
-### 3. Client Integration: Node.js Proxy
+### 3. Capability: Tools & Resources
+The plugin implements both **MCP Tools** (active queries) and **MCP Resources** (passive context).
+- **Tools:** Use the `ToolRegistry` to route JSON-RPC requests to specific implementation classes (`GetNetWorthTool`, etc.).
+- **Resources:** Use the `ResourceRegistry` to expose global snapshots (Account Hierarchy, Security Master) that the agent can read to build internal context.
+
+### 4. Client Integration: Node.js Proxy
 AI Agents (like Antigravity or Claude Desktop) natively expect MCP servers to communicate via Standard I/O (`stdio`).
 - **Why?** Because the Moneydance plugin runs inside a pre-existing GUI process, it cannot be spawned as a child process by the agent. 
 - **Solution:** A tiny Node.js script (`client/src/mcp-proxy.mjs`) acts as the stdio MCP server for the agent, translating incoming requests into HTTP POST requests sent to the Moneydance plugin.

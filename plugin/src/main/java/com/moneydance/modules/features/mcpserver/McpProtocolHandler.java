@@ -17,10 +17,12 @@ public class McpProtocolHandler {
 
     private final Main extension;
     private final ToolRegistry toolRegistry;
+    private final com.moneydance.modules.features.mcpserver.resources.ResourceRegistry resourceRegistry;
 
-    public McpProtocolHandler(Main extension, ToolRegistry toolRegistry) {
+    public McpProtocolHandler(Main extension, ToolRegistry toolRegistry, com.moneydance.modules.features.mcpserver.resources.ResourceRegistry resourceRegistry) {
         this.extension = extension;
         this.toolRegistry = toolRegistry;
+        this.resourceRegistry = resourceRegistry;
     }
 
     public String handleRequest(String requestBody) {
@@ -42,6 +44,8 @@ public class McpProtocolHandler {
                 case "ping" -> handlePing(id);
                 case "tools/list" -> handleToolsList(id);
                 case "tools/call" -> handleToolsCall(id, requestBody);
+                case "resources/list" -> handleResourcesList(id);
+                case "resources/read" -> handleResourcesRead(id, requestBody);
                 default -> jsonRpcError(id, -32601, "Method not found: " + method);
             };
         } catch (Exception e) {
@@ -55,7 +59,10 @@ public class McpProtocolHandler {
             .put("protocolVersion", PROTOCOL_VERSION)
             .putObject("capabilities", new JsonObjectBuilder()
                 .putObject("tools", new JsonObjectBuilder()
-                    .put("listChanged", false)))
+                    .put("listChanged", false))
+                .putObject("resources", new JsonObjectBuilder()
+                    .put("listChanged", false)
+                    .put("subscribe", false)))
             .putObject("serverInfo", new JsonObjectBuilder()
                 .put("name", SERVER_NAME)
                 .put("version", SERVER_VERSION))
@@ -91,6 +98,52 @@ public class McpProtocolHandler {
             return jsonRpcResult(id, result);
         } catch (Exception e) {
             return jsonRpcError(id, -32603, "Tool execution error: " + e.getMessage());
+        }
+    }
+
+    private String handleResourcesList(String id) {
+        com.moneydance.modules.features.mcpserver.json.JsonArrayBuilder resourcesArray = new com.moneydance.modules.features.mcpserver.json.JsonArrayBuilder();
+        for (com.moneydance.modules.features.mcpserver.resources.McpResource resource : resourceRegistry.getAllResources()) {
+            resourcesArray.addObject(new JsonObjectBuilder()
+                .put("uri", resource.getUri())
+                .put("name", resource.getName())
+                .put("description", resource.getDescription())
+                .put("mimeType", resource.getMimeType()));
+        }
+
+        String result = new JsonObjectBuilder()
+            .putArray("resources", resourcesArray)
+            .build();
+        return jsonRpcResult(id, result);
+    }
+
+    private String handleResourcesRead(String id, String requestBody) {
+        String paramsBlock = JsonParser.getValue(requestBody, "params");
+        String uri = JsonParser.getString(paramsBlock, "uri");
+
+        if (uri == null) {
+            return jsonRpcError(id, -32602, "Invalid params: missing uri");
+        }
+
+        com.moneydance.modules.features.mcpserver.resources.McpResource resource = resourceRegistry.getResource(uri);
+        if (resource == null) {
+            return jsonRpcError(id, -32602, "Unknown resource: " + uri);
+        }
+
+        try {
+            String content = resource.read(extension.getMDContext());
+            com.moneydance.modules.features.mcpserver.json.JsonArrayBuilder contentsArray = new com.moneydance.modules.features.mcpserver.json.JsonArrayBuilder();
+            contentsArray.addObject(new JsonObjectBuilder()
+                .put("uri", resource.getUri())
+                .put("mimeType", resource.getMimeType())
+                .put("text", content));
+
+            String result = new JsonObjectBuilder()
+                .putArray("contents", contentsArray)
+                .build();
+            return jsonRpcResult(id, result);
+        } catch (Exception e) {
+            return jsonRpcError(id, -32603, "Resource read error: " + e.getMessage());
         }
     }
 

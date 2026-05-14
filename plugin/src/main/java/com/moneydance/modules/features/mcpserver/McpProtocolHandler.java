@@ -181,12 +181,12 @@ public class McpProtocolHandler {
                 "content": [
                     {
                         "type": "text",
-                        "text": %s
+                        "text": "%s"
                     }
                 ],
                 "isError": false
             }
-            """.formatted(content.strip()));
+            """.formatted(escapeJson(content.strip())));
     }
 
     // ---- JSON-RPC helpers (minimal, no-dependency JSON) ----

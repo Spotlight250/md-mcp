@@ -10,6 +10,8 @@ import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import com.moneydance.modules.features.mcpserver.tools.*;
+import com.moneydance.modules.features.mcpserver.tools.ToolRegistry;
 
 /**
  * Manages the lifecycle of an embedded HTTP server that speaks the
@@ -31,10 +33,31 @@ public class McpServerManager {
 
     // MCP protocol handler
     private final McpProtocolHandler protocolHandler;
+    private final ToolRegistry toolRegistry;
 
     public McpServerManager(Main extension) {
         this.extension = extension;
-        this.protocolHandler = new McpProtocolHandler(extension);
+        this.toolRegistry = new ToolRegistry();
+        
+        // Register core tools
+        register(new PingTool("0.1.0"));
+        register(new GetAccountsTool());
+        register(new GetCategoriesTool());
+        register(new GetNetWorthTool());
+        register(new GetTransactionsTool());
+        
+        // Register Phase 2 tools
+        register(new GetInvestmentsTool());
+        register(new GetSecurityPricesTool());
+        register(new GetSecurityPerformanceTool());
+        register(new GetCurrenciesTool());
+        
+        this.protocolHandler = new McpProtocolHandler(extension, toolRegistry);
+    }
+
+    private void register(com.moneydance.modules.features.mcpserver.tools.McpTool tool) {
+        McpLogger.log("Registering tool: " + tool.getName());
+        this.toolRegistry.registerTool(tool);
     }
 
     /**
@@ -42,7 +65,7 @@ public class McpServerManager {
      */
     public synchronized void start() {
         if (running) {
-            Main.log("MCP server is already running on " + HOST + ":" + PORT);
+            McpLogger.log("MCP server is already running on " + HOST + ":" + PORT);
             return;
         }
 
@@ -54,9 +77,9 @@ public class McpServerManager {
             // Start the accept loop in a new thread
             new Thread(this::acceptLoop, "McpServer-Accept").start();
 
-            Main.log("MCP server started on http://" + HOST + ":" + PORT + "/mcp");
+            McpLogger.log("MCP server started on http://" + HOST + ":" + PORT + "/mcp");
         } catch (Exception e) {
-            Main.log("Failed to start MCP server: " + e.getMessage());
+            McpLogger.log("Failed to start MCP server: " + e.getMessage());
             cleanup();
         }
     }
@@ -68,9 +91,9 @@ public class McpServerManager {
         if (!running) {
             return;
         }
-        Main.log("Stopping MCP server...");
+        McpLogger.log("Stopping MCP server...");
         cleanup();
-        Main.log("MCP server stopped.");
+        McpLogger.log("MCP server stopped.");
     }
 
     public boolean isRunning() {
@@ -101,7 +124,7 @@ public class McpServerManager {
                 executor.submit(() -> handleClient(clientSocket));
             } catch (Exception e) {
                 if (running) {
-                    Main.log("Socket accept error: " + e.getMessage());
+                    McpLogger.log("Socket accept error: " + e.getMessage());
                 }
             }
         }
@@ -166,18 +189,18 @@ public class McpServerManager {
             }
             String requestBody = new String(bodyChars);
 
-            Main.log("Request: " + requestBody);
+            McpLogger.log("Request: " + requestBody);
 
             // 6. Handle Protocol
             String responseBody = protocolHandler.handleRequest(requestBody);
 
-            Main.log("Response: " + responseBody);
+            McpLogger.log("Response: " + responseBody);
 
             // 7. Send Response
             sendResponse(os, 200, "OK", "application/json", responseBody);
 
         } catch (Exception e) {
-            Main.log("Error handling client request: " + e.getMessage());
+            McpLogger.log("Error handling client request: " + e.getMessage());
         }
     }
 

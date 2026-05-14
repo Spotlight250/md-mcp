@@ -11,3 +11,4 @@ description: Rules for building, signing, and deploying the Moneydance plugin us
 - **Task:** The primary build task is `signExt`, which compiles, packages, and signs the `.mxt` file.
 - **Signing:** Key generation and signing use the `extadmin.jar`. When prompted for a passphrase during builds, the dev standard is `devkey123`.
 - **Manual Install:** Extensions are self-signed and must be manually loaded into Moneydance by the user.
+- **Autonomous Build:** You are responsible for executing the build and signing process (`signExt`) upon completion of a task. Do not ask for permission to build/sign if the task is finished and tests pass.

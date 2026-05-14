@@ -22,32 +22,26 @@ These tools are essential for the agent to answer basic questions like *"What is
   - **Parameters:** `account_id` (optional), `start_date`, `end_date`, `category_id` (optional), `payee_match` (optional).
   - **Data:** Date, payee, amount, category, memo, tags, and status (cleared/reconciled).
 
-## Phase 2: Advanced Read-Only (Investments & Planning)
-These tools allow the agent to answer questions like *"How is my retirement portfolio performing?"* or *"What bills are due next week?"*
+## [x] Phase 2: Investments & Analytics (Completed)
+- [x] **Hardened JSON Parser & Builders**
+- [x] **Portfolio Tools**
+    - [x] `get_investments`: Lists all security holdings.
+    - [x] `get_currencies`: Lists exchange rates to base currency.
+- [x] **Performance Tools**
+    - [x] `get_security_prices`: Historical price retrieval.
+    - [x] `get_security_performance`: ROI analysis data (prices + transactions).
 
-- [ ] `get_investments`
-  - **Description:** Lists all securities held within investment accounts.
-  - **Data:** Ticker symbol, security name, quantity held, current price, and total value.
-- [ ] `get_security_prices`
-  - **Description:** Retrieves historical price data for a security to enable performance analysis.
-  - **Parameters:** `security_id` / `ticker`, `start_date`, `end_date`.
-- [ ] `get_security_performance`
-  - **Description:** Deep-dive analysis of a security's actual performance. Overlays historical prices with actual transaction data (buys, sells, dividends, splits).
-  - **Parameters:** `security_id` / `ticker`, `account_id` (optional), `start_date`, `end_date`.
-- [ ] `get_currencies`
-  - **Description:** Lists available currencies and their current exchange rates relative to the base currency.
+## Potential Future Enhancements
+> **Security Note:** Write operations must be strictly opt-in via plugin settings, as the agent could mutate financial records. It is currently undecided if write operations will ever be implemented.
+
+These tools allow the agent to actively help manage or plan finances.
+
 - [ ] `get_reminders`
   - **Description:** Lists upcoming scheduled transactions (reminders).
   - **Parameters:** `days_ahead` (e.g., next 30 days).
   - **Data:** Next date, payee, amount, and frequency.
 - [ ] `get_budgets`
   - **Description:** Retrieves the current budget limits and actual spending against them.
-
-## Potential Future Enhancements (Write Operations)
-> **Security Note:** Write operations must be strictly opt-in via plugin settings, as the agent could mutate financial records. It is currently undecided if write operations will ever be implemented.
-
-These tools allow the agent to actively help manage finances, like *"Categorize my recent Amazon purchases based on my email receipts."*
-
 - [ ] `update_transaction`
   - **Description:** Modifies an existing transaction.
   - **Use Case:** The agent identifies an uncategorized transaction and assigns the correct category or tags.

@@ -109,6 +109,6 @@ public class Main extends FeatureModule {
      * Log to the Moneydance console.
      */
     static void log(String message) {
-        System.err.println("[MCP Server] " + message);
+        McpLogger.log(message);
     }
 }

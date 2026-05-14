@@ -8,7 +8,9 @@ The capabilities are broken down into logical phases.
 These tools are essential for the agent to answer basic questions like *"What is my net worth?"*, *"How much did I spend on groceries last month?"*, or *"Do I have enough cash in my checking account?"*
 
 - [ ] `get_net_worth`
-  - **Description:** Returns a high-level summary of total assets, liabilities, and net worth in the base currency.
+  - **Description:** Returns total assets, liabilities, and net worth in the base currency. Can be queried for specific accounts or across the entire file.
+  - **Parameters:** `as_of_date` (optional, defaults to today), `account_ids` (optional, defaults to all accounts).
+  - **Note:** This tool also serves the purpose of checking historical account balances at any given date "X".
 - [ ] `get_accounts`
   - **Description:** Lists all accounts (bank, credit card, investment, loan, asset).
   - **Data:** Account ID, name, type, current balance, cleared balance, and currency.
@@ -26,6 +28,12 @@ These tools allow the agent to answer questions like *"How is my retirement port
 - [ ] `get_investments`
   - **Description:** Lists all securities held within investment accounts.
   - **Data:** Ticker symbol, security name, quantity held, current price, and total value.
+- [ ] `get_security_prices`
+  - **Description:** Retrieves historical price data for a security to enable performance analysis.
+  - **Parameters:** `security_id` / `ticker`, `start_date`, `end_date`.
+- [ ] `get_security_performance`
+  - **Description:** Deep-dive analysis of a security's actual performance. Overlays historical prices with actual transaction data (buys, sells, dividends, splits).
+  - **Parameters:** `security_id` / `ticker`, `account_id` (optional), `start_date`, `end_date`.
 - [ ] `get_currencies`
   - **Description:** Lists available currencies and their current exchange rates relative to the base currency.
 - [ ] `get_reminders`
@@ -35,8 +43,8 @@ These tools allow the agent to answer questions like *"How is my retirement port
 - [ ] `get_budgets`
   - **Description:** Retrieves the current budget limits and actual spending against them.
 
-## Phase 3: AI Automation (Write Operations)
-> **Security Note:** Write operations must be strictly opt-in via plugin settings, as the agent could mutate financial records.
+## Potential Future Enhancements (Write Operations)
+> **Security Note:** Write operations must be strictly opt-in via plugin settings, as the agent could mutate financial records. It is currently undecided if write operations will ever be implemented.
 
 These tools allow the agent to actively help manage finances, like *"Categorize my recent Amazon purchases based on my email receipts."*
 

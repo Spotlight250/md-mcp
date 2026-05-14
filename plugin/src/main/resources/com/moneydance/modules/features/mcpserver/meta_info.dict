@@ -1,0 +1,9 @@
+{
+  "vendor" = "md-mcp"
+  "vendor_url" = "https://github.com/Spotlight250/md-mcp"
+  "module_name" = "MCP Server"
+  "module_desc" = "Runs a Model Context Protocol server to expose Moneydance data to AI agents"
+  "id" = "mcpserver"
+  "module_build" = "1"
+  "minbuild" = "5064"
+}

@@ -1,0 +1,103 @@
+plugins {
+    id 'java'
+}
+
+// Extension properties from gradle.properties
+def extId = project.property('ext_id')
+def extName = project.property('ext_name')
+def privKeyId = project.property('privkeyid')
+def privKeyFile = project.property('privkeyfile')
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    // Moneydance devkit (local JARs) — compileOnly so they don't get bundled
+    compileOnly files(
+        'lib/moneydance-devkit-5.1/lib/moneydance-dev.jar',
+        'lib/moneydance-devkit-5.1/lib/extadmin.jar'
+    )
+
+    // We use JDK's built-in com.sun.net.httpserver.HttpServer for the HTTP layer
+    // and implement MCP JSON-RPC protocol directly — zero external dependencies.
+    // This keeps the plugin tiny and avoids classloader conflicts inside Moneydance.
+}
+
+// Custom source set layout
+sourceSets {
+    main {
+        java {
+            srcDir 'src/main/java'
+        }
+        resources {
+            srcDir 'src/main/resources'
+        }
+    }
+}
+
+// Handle resource duplicates
+processResources {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}
+
+
+// Build the .mxt extension file
+task mxt(type: Jar) {
+    archiveBaseName = extId
+    archiveExtension = 'mxt'
+    destinationDirectory = file("${projectDir}/dist")
+
+    // Include compiled classes + resources (meta_info.dict is included via processResources)
+    from sourceSets.main.output
+
+    // Deduplicate files
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}
+
+// Generate signing keys (run once)
+task genKeys(type: JavaExec) {
+    classpath = files(
+        'lib/moneydance-devkit-5.1/lib/extadmin.jar',
+        'lib/moneydance-devkit-5.1/lib/moneydance-dev.jar'
+    )
+    mainClass = 'com.moneydance.admin.KeyAdmin'
+    args = ['genkey', privKeyFile, 'pub_key']
+    standardInput = System.in
+}
+
+// Sign the extension
+task signExt(type: JavaExec, dependsOn: mxt) {
+    classpath = files(
+        'lib/moneydance-devkit-5.1/lib/extadmin.jar',
+        'lib/moneydance-devkit-5.1/lib/moneydance-dev.jar'
+    )
+    mainClass = 'com.moneydance.admin.KeyAdmin'
+    args = ['signextjar', privKeyFile, privKeyId, extId, "dist/${extId}.mxt"]
+    standardInput = System.in
+
+    doLast {
+        // The signing tool creates s-<extId>.mxt in the working directory
+        def signedFile = file("s-${extId}.mxt")
+        def targetFile = file("dist/${extId}.mxt")
+        if (signedFile.exists()) {
+            targetFile.delete()
+            signedFile.renameTo(targetFile)
+            println "Signed extension: ${targetFile.absolutePath}"
+        }
+    }
+}
+
+// Convenience task: build and sign
+task buildExtension(dependsOn: signExt) {
+    group = 'build'
+    description = "Build and sign the ${extName} extension"
+}
+
+// Default build task also creates the mxt
+build.dependsOn mxt

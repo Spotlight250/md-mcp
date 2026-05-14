@@ -1,0 +1,28 @@
+# Build outputs
+plugin/build/
+plugin/dist/
+plugin/.gradle/
+
+# Devkit (proprietary, must be downloaded separately)
+plugin/lib/moneydance-devkit-5.1/
+plugin/lib/moneydance-devkit-5.1.tar.gz
+
+# Signing keys (generated per dev machine)
+plugin/priv_key
+plugin/pub_key
+
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# Node
+client/node_modules/
+client/dist/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Java
+*.class

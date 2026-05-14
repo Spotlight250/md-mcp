@@ -1,7 +1,8 @@
 ---
-trigger: ".*\\.mjs$|.*\\.java$"
+trigger: always_on
 description: Documentation on the Node proxy architecture and MCP protocol integration specifics.
 ---
+
 # MCP Protocol & Proxy Architecture
 
 - **Transport:** The Java plugin speaks HTTP POST (JSON-RPC) on `127.0.0.1:38867`. It does *not* speak standard MCP `stdio`.

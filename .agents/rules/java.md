@@ -1,7 +1,8 @@
 ---
-trigger: ".*\\.java$"
+trigger: always_on
 description: Java environment constraints including zero-dependency requirements and JDK 17 targeting.
 ---
+
 # Java & Dependencies Constraints
 
 - **Zero External Dependencies:** Do NOT add dependencies like Jackson, Gson, Apache Commons, Spring, or heavy HTTP servers (like Tomcat/Jetty).

@@ -9,6 +9,7 @@ import java.util.Map;
  * escaped characters, nested objects, and arrays.
  */
 public class JsonParser {
+    private static final int MAX_DEPTH = 50;
 
     /**
      * Extracts a string value for the given key from a JSON object.
@@ -55,9 +56,9 @@ public class JsonParser {
         return new Parser(json).parse();
     }
 
-    private static String stringify(Object obj) {
+    static String stringify(Object obj) {
         if (obj == null) return "null";
-        if (obj instanceof String) return "\"" + obj + "\""; // Should ideally escape here too
+        if (obj instanceof String) return "\"" + escape((String) obj) + "\"";
         if (obj instanceof Map) {
             StringBuilder sb = new StringBuilder("{");
             boolean first = true;
@@ -83,15 +84,44 @@ public class JsonParser {
         return String.valueOf(obj);
     }
 
+    static String escape(String value) {
+        if (value == null) return "";
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < value.length(); i++) {
+            char c = value.charAt(i);
+            switch (c) {
+                case '"': sb.append("\\\""); break;
+                case '\\': sb.append("\\\\"); break;
+                case '\b': sb.append("\\b"); break;
+                case '\f': sb.append("\\f"); break;
+                case '\n': sb.append("\\n"); break;
+                case '\r': sb.append("\\r"); break;
+                case '\t': sb.append("\\t"); break;
+                default:
+                    if (c < ' ') {
+                        String hex = "000" + Integer.toHexString(c);
+                        sb.append("\\u").append(hex.substring(hex.length() - 4));
+                    } else {
+                        sb.append(c);
+                    }
+            }
+        }
+        return sb.toString();
+    }
+
     private static class Parser {
         private final String json;
         private int pos = 0;
+        private int depth = 0;
 
         Parser(String json) {
             this.json = json;
         }
 
         Object parse() {
+            if (depth > MAX_DEPTH) {
+                throw new RuntimeException("Maximum JSON nesting depth exceeded");
+            }
             skipWhitespace();
             if (pos >= json.length()) return null;
             char c = json.charAt(pos);
@@ -105,50 +135,60 @@ public class JsonParser {
         }
 
         private Map<String, Object> parseObject() {
-            Map<String, Object> map = new HashMap<>();
-            consume('{');
-            skipWhitespace();
-            if (peek() == '}') {
-                consume('}');
-                return map;
-            }
-            while (true) {
-                skipWhitespace();
-                String key = parseString();
-                skipWhitespace();
-                consume(':');
-                skipWhitespace();
-                Object value = parse();
-                map.put(key, value);
+            depth++;
+            try {
+                Map<String, Object> map = new HashMap<>();
+                consume('{');
                 skipWhitespace();
                 if (peek() == '}') {
                     consume('}');
-                    break;
+                    return map;
                 }
-                consume(',');
+                while (true) {
+                    skipWhitespace();
+                    String key = parseString();
+                    skipWhitespace();
+                    consume(':');
+                    skipWhitespace();
+                    Object value = parse();
+                    map.put(key, value);
+                    skipWhitespace();
+                    if (peek() == '}') {
+                        consume('}');
+                        break;
+                    }
+                    consume(',');
+                }
+                return map;
+            } finally {
+                depth--;
             }
-            return map;
         }
 
         private java.util.List<Object> parseArray() {
-            java.util.List<Object> list = new java.util.ArrayList<>();
-            consume('[');
-            skipWhitespace();
-            if (peek() == ']') {
-                consume(']');
-                return list;
-            }
-            while (true) {
-                skipWhitespace();
-                list.add(parse());
+            depth++;
+            try {
+                java.util.List<Object> list = new java.util.ArrayList<>();
+                consume('[');
                 skipWhitespace();
                 if (peek() == ']') {
                     consume(']');
-                    break;
+                    return list;
                 }
-                consume(',');
+                while (true) {
+                    skipWhitespace();
+                    list.add(parse());
+                    skipWhitespace();
+                    if (peek() == ']') {
+                        consume(']');
+                        break;
+                    }
+                    consume(',');
+                }
+                return list;
+            } finally {
+                depth--;
             }
-            return list;
         }
 
         private String parseString() {

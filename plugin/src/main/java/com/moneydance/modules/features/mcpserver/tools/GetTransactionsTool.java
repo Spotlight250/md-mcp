@@ -71,7 +71,7 @@ public class GetTransactionsTool implements McpTool {
         int count = 0;
 
         TransactionSet txnSet = book.getTransactionSet();
-        // Use the iterator to avoid loading everything into memory at once
+        // Fallback to full scan - TODO: Optimize with indexed lookup if possible in this MD version
         Iterator<AbstractTxn> it = txnSet.iterator();
 
         while (it.hasNext() && count < MAX_TRANSACTIONS) {

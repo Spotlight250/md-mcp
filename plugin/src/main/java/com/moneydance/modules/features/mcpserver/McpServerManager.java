@@ -25,6 +25,7 @@ public class McpServerManager {
 
     private static final String HOST = "127.0.0.1";
     private static final int PORT = 38867;
+    private static final int MAX_CONTENT_LENGTH = 1024 * 1024; // 1MB limit
 
     private final Main extension;
     private ServerSocket serverSocket;
@@ -167,6 +168,13 @@ public class McpServerManager {
                         contentLength = Integer.parseInt(line.substring(15).trim());
                     } catch (NumberFormatException ignored) {}
                 }
+            }
+
+            // Check Content-Length limit
+            if (contentLength > MAX_CONTENT_LENGTH) {
+                McpLogger.log("Payload too large: " + contentLength);
+                sendResponse(os, 413, "Payload Too Large", "application/json", "{\"error\": \"Payload too large. Max " + MAX_CONTENT_LENGTH + " bytes.\"}");
+                return;
             }
 
             // 3. CORS Preflight

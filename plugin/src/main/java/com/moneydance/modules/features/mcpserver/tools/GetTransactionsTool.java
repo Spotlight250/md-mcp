@@ -23,7 +23,7 @@ public class GetTransactionsTool implements McpTool {
 
     @Override
     public String getDescription() {
-        return "Queries historical transactions across accounts with optional filtering.";
+        return "Queries historical transactions across accounts with optional filtering. Returns details including splits, tags, and clearing status.";
     }
 
     @Override
@@ -37,7 +37,8 @@ public class GetTransactionsTool implements McpTool {
                 "\"category_id\":{\"type\":\"string\",\"description\":\"Optional category UUID\"}," +
                 "\"payee_match\":{\"type\":\"string\",\"description\":\"Optional substring match for payee\"}" +
                 "}," +
-                "\"required\":[\"start_date\",\"end_date\"]" +
+                "\"required\":[\"start_date\",\"end_date\"]," +
+                "\"description\":\"Returns transactions including: date, amount, payee, account, category, status (Uncleared, Reconciling, Cleared), tags (array), and splits (if multi-split).\"" +
                 "}";
     }
 
@@ -122,18 +123,57 @@ public class GetTransactionsTool implements McpTool {
                 .put("account", txn.getAccount().getFullAccountName())
                 .put("account_id", txn.getAccount().getUUID());
 
+            // Status mapping
+            String status = "Uncleared";
+            byte s = txn.getStatus();
+            if (s == AbstractTxn.STATUS_CLEARED) status = "Cleared";
+            else if (s == AbstractTxn.STATUS_RECONCILING) status = "Reconciling";
+            txnObj.put("status", status);
+
+            // Tags
+            java.util.List<String> keywords = txn.getKeywords();
+            if (keywords != null && !keywords.isEmpty()) {
+                JsonArrayBuilder tagArray = new JsonArrayBuilder();
+                for (String kw : keywords) tagArray.add(kw);
+                txnObj.putArray("tags", tagArray);
+            }
+
+            // Check number
+            String checkNum = txn.getCheckNumber();
+            if (checkNum != null && !checkNum.trim().isEmpty()) {
+                txnObj.put("check_number", checkNum);
+            }
+
             if (txn instanceof ParentTxn) {
                 ParentTxn p = (ParentTxn) txn;
                 txnObj.put("payee", p.getDescription());
                 txnObj.put("memo", p.getMemo());
+                
                 if (p.getSplitCount() > 0) {
-                    txnObj.put("category", p.getSplit(0).getAccount().getFullAccountName());
+                    JsonArrayBuilder splitsArray = new JsonArrayBuilder();
+                    for (int i = 0; i < p.getSplitCount(); i++) {
+                        SplitTxn split = p.getSplit(i);
+                        splitsArray.addObject(new JsonObjectBuilder()
+                            .put("category", split.getAccount().getFullAccountName())
+                            .put("category_id", split.getAccount().getUUID())
+                            .put("amount", CurrencyFormatter.toDecimal(split.getValue(), split.getAccount().getCurrencyType()))
+                            .put("memo", split.getDescription()));
+                    }
+                    txnObj.putArray("splits", splitsArray);
+                    
+                    if (p.getSplitCount() == 1) {
+                        txnObj.put("category", p.getSplit(0).getAccount().getFullAccountName());
+                        txnObj.put("category_id", p.getSplit(0).getAccount().getUUID());
+                    } else {
+                        txnObj.put("category", "-- Split --");
+                    }
                 }
             } else if (txn instanceof SplitTxn) {
-                SplitTxn s = (SplitTxn) txn;
-                txnObj.put("payee", s.getParentTxn().getDescription());
-                txnObj.put("memo", s.getDescription());
-                txnObj.put("category", s.getParentTxn().getAccount().getFullAccountName());
+                SplitTxn sTxn = (SplitTxn) txn;
+                txnObj.put("payee", sTxn.getParentTxn().getDescription());
+                txnObj.put("memo", sTxn.getDescription());
+                txnObj.put("category", sTxn.getParentTxn().getAccount().getFullAccountName());
+                txnObj.put("category_id", sTxn.getParentTxn().getAccount().getUUID());
             }
 
             txnsArray.addObject(txnObj);

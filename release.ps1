@@ -32,7 +32,7 @@ gh release create $tagName `
     "plugin/dist/mcpserver.mxt#Moneydance Extension (.mxt)" `
     "skills/dist/subscription-finder.zip#Subscription Finder Skill (.zip)" `
     --title "Release $tagName" `
-    --notes "Moneydance MCP Bridge Release $tagName"
+    --notes "### 🚀 Welcome to the Moneydance MCP Bridge ($tagName)`n`nThis release enables AI agents to securely interact with your Moneydance financial data.`n`n#### 📖 Getting Started`n- **[User Guide](https://github.com/Spotlight250/md-mcp/blob/main/docs/user-guide.md)**: Installation and configuration instructions.`n- **[Privacy & Security](https://github.com/Spotlight250/md-mcp/blob/main/docs/user-guide.md#-privacy--security)**: Learn how your data is handled.`n`n#### 📦 Included Assets`n- **mcpserver.mxt**: The Moneydance extension.`n- **subscription-finder.zip**: AI Skill package for auditing recurring payments."
 
 if ($LASTEXITCODE -ne 0) { 
     Write-Host "`n[ERROR] GitHub Release creation failed!" -ForegroundColor Red

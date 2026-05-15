@@ -19,6 +19,7 @@ plugin/pub_key
 # Node
 client/node_modules/
 client/dist/
+skills/dist/
 
 # OS
 .DS_Store

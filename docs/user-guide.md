@@ -48,13 +48,21 @@ Once configured, you can ask your AI assistant questions like:
 
 ## 🚀 AI Automation Skills
 
-Beyond simple questions, you can use pre-defined **Skills** to perform deep analysis. To use a skill, simply copy the requirement into your chat or ask the agent to perform the specific audit.
+"Skills" are advanced prompts or workflows that help the AI perform complex audits (like identifying subscriptions or prepping for taxes) by chaining multiple MCP tool calls together.
+
+### How to use a Skill:
+
+1. Go to your AI agent's **Skills**, **Plugins**, or **Tools** menu.
+2. Click **Create Skill**, **Upload**, or **Add Plugin**.
+3. Select the `.zip` file you downloaded from the [GitHub Releases](https://github.com/Spotlight250/md-mcp/releases).
+4. Your agent will now have the pre-defined logic and prompts needed for advanced financial audits.
 
 ### Available Skills
 
-- **[Subscription Finder](../skills/subscription-finder/)**: Automatically scans your ledger to identify recurring payments, price increases, and hidden subscriptions.
+- **[Subscription Finder](../skills/subscription-finder/)**: Scans your ledger to identify recurring payments, detect price increases, and highlight "zombie" subscriptions.
+    - *Prompt Example*: "Use the subscription finder skill logic to audit my last 6 months of spending and show me everything that looks like a recurring payment."
 
-> **Tip**: You can tell your agent: *"I've provided a subscription finder skill template in my files, please use it to audit my last 6 months of spending."*
+> **Tip**: Skills work best when you provide a specific timeframe (e.g., "last 90 days") to minimize data processing.
 
 ---
 

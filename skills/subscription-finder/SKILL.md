@@ -1,3 +1,20 @@
+---
+name: subscription-finder
+description: Audits Moneydance ledgers for recurring subscriptions and price creep.
+version: 1.0.1
+author: md-mcp
+triggers:
+  - "Find my subscriptions"
+  - "What am I paying for every month?"
+  - "Audit my recurring expenses"
+  - "Are there any hidden subscriptions in my bank account?"
+  - "Did any of my bills go up recently?"
+  - "Check for price creep in my monthly payments"
+tools:
+  - get_transactions
+  - get_categories
+---
+
 # Instructions: Subscription & Recurring Expense Finder
 
 ## Objective
@@ -6,15 +23,15 @@ Analyze the user's Moneydance ledger to identify recurring payments, hidden subs
 ## Workflow
 
 ### 1. Data Ingestion
-Fetch all transactions for the last **180 days** across all Bank and Credit Card accounts.
-- Use `get_transactions` with a `start_date` calculated as 6 months ago from today.
+Fetch all transactions for the last **90 days** (3 months) to ensure data volume remains within context limits.
+- Use `get_transactions` with a `start_date` calculated as 90 days ago from today.
+- **Optimization**: If the agent hits context limits, retry with the last **30 days**.
 
 ### 2. Analysis Logic
 Group the returned transactions by **Payee** and examine the following:
 - **Frequency**: Look for payments appearing roughly every 28-32 days.
 - **Consistency**: Flag payees that have the same amount every month.
 - **Creep**: Compare the earliest instance of a recurring payment to the most recent. If the amount has increased, highlight it as "Price Creep."
-- **Annuals**: Identify payees that appeared exactly once in the 180-day window but are likely subscriptions (e.g., "Amazon Prime", "VPN Renewal").
 
 ### 3. Categorization Audit
 For each identified subscription, check its current category using the `get_categories` tool.

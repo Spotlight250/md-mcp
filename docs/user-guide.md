@@ -66,6 +66,20 @@ Once configured, you can ask your AI assistant questions like:
 
 ---
 
+## 🔒 Privacy & Security
+
+The AI Agent Bridge is built with a **"local-first"** philosophy, but it is important to understand how your data moves:
+
+1.  **Local Processing**: The bridge and the data fetch happen entirely on your computer. Your Moneydance data is never "streamed" to a central server.
+2.  **On-Demand Sharing**: Your financial data is **only** sent to your AI provider (e.g., Anthropic, Google, or OpenAI) when you ask a question that requires it. 
+3.  **Selective Context**: The bridge only shares the specific data needed to answer your question (e.g., "last 90 days of transactions"). It never sends your entire ledger unless you explicitly ask for a full audit.
+4.  **No Training**: Most "Pro" or "Enterprise" AI tiers do not use your conversation data to train their models, but we recommend checking your specific provider's privacy policy.
+
+> [!IMPORTANT]
+> If you require 100% air-gapped privacy, you can use this bridge with **local AI models** (like Llama 3 via Goose or LM Studio).
+
+---
+
 ## 🛠 Troubleshooting
 
 - **Server Not Running**: In Moneydance, check **Help** -> **Console Window**. You should see `[MCP Server] MCP server started`.

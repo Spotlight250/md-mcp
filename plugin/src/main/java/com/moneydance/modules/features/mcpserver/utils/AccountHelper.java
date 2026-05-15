@@ -44,4 +44,17 @@ public class AccountHelper {
                type == Account.AccountType.LOAN || 
                type == Account.AccountType.LIABILITY;
     }
+
+    /**
+     * Returns true if the account should be included in a net worth calculation.
+     * Mirrors the logic used by Moneydance's built-in NetWorthCalculator:
+     * - Excludes inactive accounts
+     * - Excludes accounts where "Include in Net Worth" is unchecked
+     * - Only includes asset or liability account types
+     */
+    public static boolean shouldIncludeInNetWorth(Account acct) {
+        if (acct.getAccountIsInactive()) return false;
+        if (!acct.shouldBeIncludedInNetWorth()) return false;
+        return isAsset(acct) || isLiability(acct);
+    }
 }

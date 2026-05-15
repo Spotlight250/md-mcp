@@ -16,7 +16,8 @@ public class GetAccountsToolTest {
         GetAccountsTool tool = new GetAccountsTool();
         assertTrue(tool.getDescription().contains("Lists all accounts"));
     }
-    
-    // Additional tests for JSON formatting will be added once I define 
-    // the internal data-to-json logic.
+    @Test
+    void testParameterParsing() {
+        // We'll verify the parsing logic once implemented in the execute method
+    }
 }

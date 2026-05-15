@@ -54,7 +54,6 @@ public class AccountHelper {
      */
     public static boolean shouldIncludeInNetWorth(Account acct) {
         if (acct.getAccountIsInactive()) return false;
-        if (!acct.shouldBeIncludedInNetWorth()) return false;
         return isAsset(acct) || isLiability(acct);
     }
 }

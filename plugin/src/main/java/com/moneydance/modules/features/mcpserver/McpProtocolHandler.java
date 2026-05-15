@@ -48,9 +48,10 @@ public class McpProtocolHandler {
                 case "resources/read" -> handleResourcesRead(id, requestBody);
                 default -> jsonRpcError(id, -32601, "Method not found: " + method);
             };
-        } catch (Exception e) {
-            McpLogger.log("Error handling request: " + e.getMessage());
-            return jsonRpcError("null", -32603, "Internal error: " + e.getMessage());
+        } catch (Throwable t) {
+            McpLogger.log("Critical error handling request: " + t.toString());
+            t.printStackTrace(System.err);
+            return jsonRpcError(null, -32603, "Internal error: " + t.toString());
         }
     }
 

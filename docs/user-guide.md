@@ -43,6 +43,7 @@ The extension includes a built-in dashboard that generates your MCP configuratio
 Once configured, you can ask your AI assistant questions like:
 
 - *"What is my current net worth?"*
+- *"Show me my account balances as of January 1st."*
 - *"Show me my 5 most recent transactions in my 'Groceries' category."*
 - *"Analyze my investment performance since January 1st."*
 

@@ -10,7 +10,7 @@ Tools are active functions that the AI Agent can invoke to query specific data p
 | Tool | Description | Key Parameters |
 | :--- | :--- | :--- |
 | `get_net_worth` | Returns total assets, liabilities, and net worth. | `as_of_date`, `account_ids` |
-| `get_accounts` | Lists bank, credit card, investment, and loan accounts. | None |
+| `get_accounts` | Lists bank, credit card, investment, and loan accounts. Supports historical dates and balance types. | `as_of_date`, `cleared_only`, `include_inactive`, `include_hidden` |
 | `get_categories` | Lists all income and expense categories. | None |
 | `get_transactions` | Search the ledger for specific activity. | `start_date`, `end_date`, `payee`, `category` |
 
@@ -53,6 +53,8 @@ Built for privacy-conscious financial management.
 
 The agent can now answer complex questions such as:
 - *"Show me my top 5 investment holdings by current value."*
-- *"What was my ROI on Apple stock compared to the total gain/loss?"*
-- *"Find all transactions in the 'Groceries' category from last month that were over $100."*
+- *"What is my current net worth?"*
+- *"Show me my account balances as of January 1st."*
+- *"Show me my 5 most recent transactions in my 'Groceries' category."*
+- *"Analyze my investment performance since January 1st."*
 - *"Does my net worth include the cash in my brokerage account?"*

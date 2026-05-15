@@ -1,6 +1,7 @@
 package com.moneydance.modules.features.mcpserver.tools;
 
 import com.moneydance.apps.md.controller.FeatureModuleContext;
+import com.moneydance.modules.features.mcpserver.McpLogger;
 import com.infinitekind.moneydance.model.Account;
 import com.infinitekind.moneydance.model.AccountBook;
 import com.infinitekind.moneydance.model.AccountUtil;
@@ -64,6 +65,7 @@ public class GetNetWorthTool implements McpTool {
         
         while (it.hasNext()) {
             Account acct = it.next();
+            McpLogger.log("Calculating balance for: " + acct.getFullAccountName());
             
             // Skip if we have a target list and this account isn't in it
             if (targetIds != null && !targetIds.isEmpty() && !targetIds.contains(acct.getUUID())) {
@@ -72,20 +74,20 @@ public class GetNetWorthTool implements McpTool {
 
             // Filter using standard SDK-aligned logic
             if (com.moneydance.modules.features.mcpserver.utils.AccountHelper.shouldIncludeInNetWorth(acct)) {
-                long balance;
-                if (mdDate > 0) {
-                    balance = AccountUtil.getBalanceAsOfDate(book, acct, mdDate);
-                } else {
-                    balance = acct.getBalance();
-                }
-
-                long valueInBase = com.infinitekind.moneydance.model.CurrencyUtil.convertValue(
-                    balance, acct.getCurrencyType(), base, conversionDate);
-
-                if (com.moneydance.modules.features.mcpserver.utils.AccountHelper.isAsset(acct)) {
-                    totalAssets += valueInBase;
-                } else {
-                    totalLiabilities += valueInBase;
+                long balance = (mdDate > 0) ? 
+                    com.infinitekind.moneydance.model.AccountUtil.getBalanceAsOfDate(book, acct, mdDate) : 
+                    acct.getBalance();
+                
+                com.infinitekind.moneydance.model.CurrencyType acctCurrency = acct.getCurrencyType();
+                if (acctCurrency != null) {
+                    long valueInBase = com.infinitekind.moneydance.model.CurrencyUtil.convertValue(
+                        balance, acctCurrency, base, conversionDate);
+                    
+                    if (com.moneydance.modules.features.mcpserver.utils.AccountHelper.isAsset(acct)) {
+                        totalAssets += valueInBase;
+                    } else if (com.moneydance.modules.features.mcpserver.utils.AccountHelper.isLiability(acct)) {
+                        totalLiabilities += valueInBase;
+                    }
                 }
             }
         }

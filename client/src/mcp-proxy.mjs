@@ -37,7 +37,7 @@ rl.on('line', async (line) => {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: line,
-            signal: AbortSignal.timeout(2000) // Don't hang Claude
+            signal: AbortSignal.timeout(60000) // Increase timeout for complex calculations
         });
 
         const responseText = await response.text();

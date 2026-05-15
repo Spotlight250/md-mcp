@@ -48,6 +48,9 @@ The project consists of two main components:
 - **Isolated Formatting**: Separates data retrieval from JSON building for 100% test coverage of financial logic.
 - **Zero Dependencies (Java)**: Pure Java implementation for maximum compatibility and security.
 
+## 📜 Release History
+Track all changes and project milestones in the **[Changelog](CHANGELOG.md)**.
+
 ---
 
 ## ⚖️ License

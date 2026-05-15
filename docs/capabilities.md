@@ -7,19 +7,19 @@ The Moneydance MCP Server exposes your financial data through three primary buil
 Tools are active functions that the AI Agent can invoke to query specific data points or perform analysis.
 
 ### Core Finance
-| Tool | Description | Key Parameters |
+| Tool | Description | Key Fields / Metadata |
 | :--- | :--- | :--- |
 | `get_net_worth` | Returns total assets, liabilities, and net worth. | `as_of_date`, `account_ids` |
-| `get_accounts` | Lists bank, credit card, investment, and loan accounts. Supports historical dates and balance types. | `as_of_date`, `cleared_only`, `include_inactive`, `include_hidden` |
+| `get_accounts` | Lists all accounts with balances and **institutional metadata**: ticker symbols, bank account numbers, interest rates (for loans/assets), and notes. | `as_of_date`, `cleared_only`, `include_inactive`, `include_hidden` |
 | `get_categories` | Lists all income and expense categories. | None |
-| `get_transactions` | Search the ledger for specific activity. | `start_date`, `end_date`, `payee`, `category` |
+| `get_transactions` | Search the ledger for specific activity with **audit-grade data**: multi-split breakdowns, user-defined tags, and clearing status (Uncleared, Reconciling, Cleared). | `start_date`, `end_date`, `payee_match`, `category_id`, `account_id` |
 
 ### Investments & Performance
 | Tool | Description | Key Parameters |
 | :--- | :--- | :--- |
-| `get_investments` | Lists all held securities with shares and current value. | None |
+| `get_investments` | Lists all held securities with shares, current value, and **ticker symbols**. | None |
 | `get_security_prices` | Returns historical price snapshots for a security. | `ticker`, `start_date`, `end_date` |
-| `get_security_performance` | Provides ROI, gain/loss, and trade history. | `ticker`, `account_id` |
+| `get_security_performance` | Provides deep-dive ROI and gain/loss using **native SDK calculations** for bit-for-bit accurate cost basis, unrealized gain/loss, and annualized ROI. | `ticker`, `account_id` |
 | `get_currencies` | Current exchange rates relative to base currency. | None |
 
 ---
@@ -51,7 +51,7 @@ Built for privacy-conscious financial management.
 
 ## 4. Example Queries
 
-The agent can now answer complex questions such as:
+The agent handles complex queries such as:
 - *"Show me my top 5 investment holdings by current value."*
 - *"What is my current net worth?"*
 - *"Show me my account balances as of January 1st."*

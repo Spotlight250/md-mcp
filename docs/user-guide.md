@@ -56,7 +56,7 @@ Once configured, you can ask your AI assistant questions like:
 1. Go to your AI agent's **Skills**, **Plugins**, or **Tools** menu.
 2. Click **Create Skill**, **Upload**, or **Add Plugin**.
 3. Select the `.zip` file you downloaded from the [GitHub Releases](https://github.com/Spotlight250/md-mcp/releases).
-4. Your agent will now have the pre-defined logic and prompts needed for advanced financial audits.
+4. Your agent uses the pre-defined logic and prompts for advanced financial audits.
 
 ### Available Skills
 

@@ -10,10 +10,11 @@ public class GetAccountsToolSchemaTest {
         GetAccountsTool tool = new GetAccountsTool();
         String schema = tool.getInputSchema();
         
-        // We want to ensure the schema mentions the new output fields in some way, 
-        // or at least that we've updated the description.
-        // For Phase 1, we'll update the description to mention 'ticker', 'account_number', etc.
         assertTrue(tool.getDescription().contains("ticker"), "Description should mention ticker");
         assertTrue(tool.getDescription().contains("account number"), "Description should mention account number");
+        assertTrue(tool.getDescription().contains("notes"), "Description should mention notes");
+        
+        assertTrue(schema.contains("ticker"), "Schema description should mention ticker");
+        assertTrue(schema.contains("account_number"), "Schema description should mention account_number");
     }
 }

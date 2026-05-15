@@ -28,6 +28,16 @@ These tools allow the agent to answer basic financial questions.
   - [x] `mcp://moneydance/categories/full`: Comprehensive category map (JSON).
   - [x] `mcp://moneydance/securities/master`: Security metadata master list (JSON).
 
+## [x] Phase 2.6: Hardened SDK (Audit & High-Fidelity)
+
+- [x] **High-Fidelity Metadata**:
+  - [x] Institutional account metadata (Ticker, Account Numbers, Interest Rates).
+  - [x] Transaction-level audit data (Splits, Tags, Clearing Status).
+- [x] **Native Performance**:
+  - [x] Native gain/loss and cost basis calculation using `InvestUtil`.
+  - [x] Aggregated position performance across multiple investment accounts.
+- [x] **TDD Hardening**: Dynamic proxy-based test suite for SDK binary isolation.
+
 ## [ ] Future Roadmap
 >
 > **Security Note:** Write operations require explicit user approval and are architected as "Human-in-the-loop."

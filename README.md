@@ -20,8 +20,8 @@ If you are a developer looking to extend the plugin or build the `.mxt` yourself
 
 ## 🛠 Features
 
-- **Financial Tools**: Query accounts, categories, net worth, and detailed transaction history.
-- **Investment Analytics**: ROI analysis, historical price tracking, and portfolio valuation.
+- **Financial Tools**: Query accounts, categories, net worth, and detailed transaction history with **high-fidelity metadata** (splits, tags, clearing status).
+- **Investment Analytics**: Native gain/loss, cost basis, and ROI tracking using the internal Moneydance reporting engine.
 - **Structural Resources**: Instant discovery of account and category hierarchies.
 - **AI Automation Skills**: Pre-built templates for complex tasks like subscription auditing and tax prep.
 - **Security First**: Hardened JSON infrastructure with strictly read-only operations and localhost-only binding.

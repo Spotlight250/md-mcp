@@ -71,78 +71,7 @@ public class GetAccountsTool implements McpTool {
             if (!includeHidden && acct.getHideOnHomePage()) continue;
 
             if (isBalanceAccount(acct)) {
-                long balance;
-                long recursiveBalanceBase;
-                
-                if (isoDate != null || clearedOnly) {
-                    balance = getSafeBalance(book, acct, mdDate, clearedOnly);
-                    recursiveBalanceBase = calculateRecursiveBalanceBase(book, acct, mdDate, clearedOnly, base);
-                } else {
-                    balance = acct.getBalance();
-                    recursiveBalanceBase = calculateRecursiveBalanceBase(book, acct, DateUtil.getToday(), false, base);
-                }
-
-                long balanceBase = CurrencyUtil.convertValue(balance, acct.getCurrencyType(), base, mdDate);
-                long recursiveBalance = CurrencyUtil.convertValue(recursiveBalanceBase, base, acct.getCurrencyType(), mdDate);
-
-                JsonObjectBuilder acctObj = new JsonObjectBuilder()
-                    .put("id", acct.getUUID())
-                    .put("name", acct.getFullAccountName())
-                    .put("type", acct.getAccountType().name())
-                    .put("balance", CurrencyFormatter.toDecimal(balance, acct.getCurrencyType()))
-                    .put("balance_base", CurrencyFormatter.toDecimal(balanceBase, base))
-                    .put("total_balance", CurrencyFormatter.toDecimal(recursiveBalance, acct.getCurrencyType()))
-                    .put("total_balance_base", CurrencyFormatter.toDecimal(recursiveBalanceBase, base))
-                    .put("currency", acct.getCurrencyType().getIDString())
-                    .put("is_inactive", acct.getAccountIsInactive())
-                    .put("is_hidden", acct.getHideOnHomePage())
-                    .put("as_of_date", DateUtil.encodeIsoDate(mdDate))
-                    .put("cleared_only", clearedOnly);
-                
-                // --- Phase 1: Metadata Extraction ---
-                CurrencyType curr = acct.getCurrencyType();
-                if (curr != null) {
-                    String ticker = curr.getTickerSymbol();
-                    if (ticker != null && !ticker.trim().isEmpty()) {
-                        acctObj.put("ticker", ticker);
-                    }
-                }
-
-                String notes = acct.getAccountDescription();
-                if (notes != null && !notes.trim().isEmpty()) {
-                    acctObj.put("notes", notes);
-                }
-
-                String acctNum = null;
-                switch (acct.getAccountType()) {
-                    case BANK: acctNum = acct.getBankAccountNumber(); break;
-                    case INVESTMENT: acctNum = acct.getInvestAccountNumber(); break;
-                    case CREDIT_CARD: acctNum = acct.getCardNumber(); break;
-                    case LOAN:
-                    case ASSET:
-                        double rate = acct.getInterestRate();
-                        if (rate != 0) acctObj.put("interest_rate", rate);
-                        break;
-                }
-                if (acctNum != null && !acctNum.trim().isEmpty()) {
-                    acctObj.put("account_number", acctNum);
-                }
-                // ------------------------------------
-
-                if (AccountUtil.getBalanceAsOfDate(book, acct, mdDate, clearedOnly) == Long.MIN_VALUE) {
-                    acctObj.put("data_quality", "warning: balance unavailable for this date");
-                }
-                
-                Account parent = acct.getParentAccount();
-                if (parent != null && parent.getAccountType() != Account.AccountType.ROOT) {
-                    acctObj.put("parent_id", parent.getUUID());
-                }
-                
-                if (acct.getAccountType() == Account.AccountType.SECURITY) {
-                    acctObj.put("shares", balance);
-                }
-                
-                accountsArray.addObject(acctObj);
+                accountsArray.addObject(accountToJson(acct, book, mdDate, clearedOnly, base));
             }
         }
 
@@ -153,6 +82,91 @@ public class GetAccountsTool implements McpTool {
                     .put("text", accountsArray.build())))
             .put("isError", false)
             .build();
+    }
+
+    /**
+     * Converts a single account to a JsonObjectBuilder with all metadata and balances.
+     * Extracted for unit testing without FeatureModuleContext.
+     */
+    public JsonObjectBuilder accountToJson(Account acct, AccountBook book, int mdDate, boolean clearedOnly, CurrencyType base) {
+        long balance;
+        long recursiveBalanceBase;
+        
+        if (mdDate != DateUtil.getToday() || clearedOnly) {
+            balance = getSafeBalance(book, acct, mdDate, clearedOnly);
+            recursiveBalanceBase = calculateRecursiveBalanceBase(book, acct, mdDate, clearedOnly, base);
+        } else {
+            balance = acct.getBalance();
+            recursiveBalanceBase = calculateRecursiveBalanceBase(book, acct, DateUtil.getToday(), false, base);
+        }
+
+        long balanceBase = CurrencyUtil.convertValue(balance, acct.getCurrencyType(), base, mdDate);
+        long recursiveBalance = CurrencyUtil.convertValue(recursiveBalanceBase, base, acct.getCurrencyType(), mdDate);
+
+        JsonObjectBuilder acctObj = new JsonObjectBuilder()
+            .put("id", acct.getUUID())
+            .put("name", acct.getFullAccountName())
+            .put("type", acct.getAccountType().name())
+            .put("balance", CurrencyFormatter.toDecimal(balance, acct.getCurrencyType()))
+            .put("balance_base", CurrencyFormatter.toDecimal(balanceBase, base))
+            .put("total_balance", CurrencyFormatter.toDecimal(recursiveBalance, acct.getCurrencyType()))
+            .put("total_balance_base", CurrencyFormatter.toDecimal(recursiveBalanceBase, base))
+            .put("currency", acct.getCurrencyType().getIDString())
+            .put("is_inactive", acct.getAccountIsInactive())
+            .put("is_hidden", acct.getHideOnHomePage())
+            .put("as_of_date", DateUtil.encodeIsoDate(mdDate))
+            .put("cleared_only", clearedOnly);
+        
+        // --- Metadata Extraction ---
+        addMetadataToJson(acctObj, acct);
+        
+        if (AccountUtil.getBalanceAsOfDate(book, acct, mdDate, clearedOnly) == Long.MIN_VALUE) {
+            acctObj.put("data_quality", "warning: balance unavailable for this date");
+        }
+        
+        Account parent = acct.getParentAccount();
+        if (parent != null && parent.getAccountType() != Account.AccountType.ROOT) {
+            acctObj.put("parent_id", parent.getUUID());
+        }
+        
+        if (acct.getAccountType() == Account.AccountType.SECURITY) {
+            acctObj.put("shares", balance);
+        }
+        return acctObj;
+    }
+
+    /**
+     * Populates the JSON object with account metadata.
+     * Separated for clarity and testing.
+     */
+    protected void addMetadataToJson(JsonObjectBuilder acctObj, Account acct) {
+        CurrencyType curr = acct.getCurrencyType();
+        if (curr != null) {
+            String ticker = curr.getTickerSymbol();
+            if (ticker != null && !ticker.trim().isEmpty()) {
+                acctObj.put("ticker", ticker);
+            }
+        }
+
+        String notes = acct.getAccountDescription();
+        if (notes != null && !notes.trim().isEmpty()) {
+            acctObj.put("notes", notes);
+        }
+
+        String acctNum = null;
+        switch (acct.getAccountType()) {
+            case BANK: acctNum = acct.getBankAccountNumber(); break;
+            case INVESTMENT: acctNum = acct.getInvestAccountNumber(); break;
+            case CREDIT_CARD: acctNum = acct.getCardNumber(); break;
+            case LOAN:
+            case ASSET:
+                double rate = acct.getInterestRate();
+                if (rate != 0) acctObj.put("interest_rate", rate);
+                break;
+        }
+        if (acctNum != null && !acctNum.trim().isEmpty()) {
+            acctObj.put("account_number", acctNum);
+        }
     }
 
     private long getSafeBalance(AccountBook book, Account acct, int date, boolean clearedOnly) {

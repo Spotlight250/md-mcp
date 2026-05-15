@@ -64,7 +64,18 @@ Once configured, you can ask your AI assistant questions like:
 - *"Show me my 5 most recent transactions in my 'Groceries' category."*
 - *"Analyze my investment performance since January 1st."*
 
-### Troubleshooting
+## 🚀 AI Automation Skills
+
+Beyond simple questions, you can use pre-defined **Skills** to perform deep analysis. To use a skill, simply copy the requirement into your chat or ask the agent to perform the specific audit.
+
+### Available Skills:
+- **[Subscription Finder](../skills/subscription_finder.md)**: Automatically scans your ledger to identify recurring payments, price increases, and hidden subscriptions.
+
+> **Tip**: You can tell your agent: *"I've provided a subscription finder skill template in my files, please use it to audit my last 6 months of spending."*
+
+---
+
+## 🛠 Troubleshooting
 - **Server Not Running**: In Moneydance, check **Help** -> **Console Window**. You should see `[MCP Server] MCP server started`.
 - **Manual Start**: If the server didn't start automatically, go to **Extensions** -> **AI Agent Bridge (MCP)** to toggle it on.
 - **Node Errors**: Ensure `node --version` works in your terminal.

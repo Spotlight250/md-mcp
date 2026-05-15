@@ -23,9 +23,10 @@ If you are a developer looking to extend the plugin or build the `.mxt` yourself
 - **Financial Tools**: Query accounts, categories, net worth, and detailed transaction history.
 - **Investment Analytics**: ROI analysis, historical price tracking, and portfolio valuation.
 - **Structural Resources**: Instant discovery of account and category hierarchies.
+- **AI Automation Skills**: Pre-built templates for complex tasks like subscription auditing and tax prep.
 - **Security First**: Hardened JSON infrastructure with strictly read-only operations and localhost-only binding.
 
-👉 **[View Detailed Capabilities & Example Queries](docs/capabilities.md)**
+👉 **[View Detailed Capabilities & Examples](docs/capabilities.md)**
 
 ---
 

@@ -1,51 +1,41 @@
-# Moneydance MCP Server Plugin
+# Moneydance MCP Bridge 🚀
 
 This repository provides a high-performance, secure bridge between [Moneydance](https://infinitekind.com/moneydance) and AI Agents via the [Model Context Protocol (MCP)](https://modelcontextprotocol.io).
 
 When the Moneydance application is open and the extension is enabled, it allows local AI assistants to "read" your live financial data—including net worth, investment performance, and transaction history—directly from the source with zero cloud dependencies.
 
-## 🚀 Current Status: Phase 2.5 Complete
+---
 
-The server is fully functional for **Read-Only** operations. It features a hardened JSON infrastructure and a comprehensive toolset for personal finance analysis.
+## 📥 Getting Started
 
-### Core Capabilities
+### **I just want to use it**
+If you are a Moneydance user who wants to connect to an AI agent (like Claude Desktop):
+👉 **[Read the User Installation Guide](docs/user-guide.md)**
+
+### **I want to contribute or build from source**
+If you are a developer looking to extend the plugin or build the `.mxt` yourself:
+👉 **[Read the Development & Build Guide](docs/development.md)**
+
+---
+
+## 🛠 Features
 
 - **Financial Tools**: Query accounts, categories, net worth, and detailed transaction history.
 - **Investment Analytics**: ROI analysis, historical price tracking, and portfolio valuation.
 - **Structural Resources**: Instant discovery of account and category hierarchies.
-- **Security First**: 127.0.0.1 loopback only, zero external dependencies, and TDD-verified accuracy.
+- **Security First**: Hardened JSON infrastructure with strictly read-only operations and localhost-only binding.
 
 👉 **[View Detailed Capabilities & Example Queries](docs/capabilities.md)**
 
 ---
 
-## 🛠 Documentation Index
+## 🏗 Project Architecture
 
-1. **[Architecture Overview](docs/architecture.md)**
-    - System flow, security model, and the Node.js Proxy rationale.
-2. **[Building & Installing](docs/build-and-install.md)**
-    - Compiling the `.mxt` extension and loading it into Moneydance.
-3. **[MCP Client Integration](docs/mcp-client.md)**
-    - Configuring Claude, Desktop apps, or the standalone test client.
-4. **[Roadmap](TODO.md)**
-    - Future phases including Budgets, Reminders, and AI-driven Categorization.
+The project consists of two main components:
+1.  **Java Plugin**: Runs inside Moneydance, providing a secure HTTP JSON-RPC endpoint.
+2.  **Node.js Proxy**: Bridges the Java HTTP server to the standard MCP `stdio` transport.
 
----
-
-## ⚡ Quick Start
-
-1. **Build the Plugin:** Run `.\gradlew.bat signExt` in the `plugin/` directory (Passphrase: `devkey123`).
-2. **Install in Moneydance:** Go to *Extensions* -> *Manage Extensions* -> *Add From File...* and select `plugin/dist/mcpserver.mxt`.
-3. **Start the Proxy:** Configure your MCP host to use the proxy script:
-
-    ```json
-    "moneydance": {
-      "command": "node",
-      "args": ["/path/to/md-mcp/client/src/mcp-proxy.mjs"]
-    }
-    ```
-
-4. **Ask your Agent:** *"What is my current net worth across all accounts?"*
+👉 **[Architecture Deep Dive](docs/architecture.md)**
 
 ---
 
@@ -54,3 +44,8 @@ The server is fully functional for **Read-Only** operations. It features a harde
 - **Custom JSON Infrastructure**: A ground-up recursive descent parser ensures stability within the Moneydance classloader.
 - **Isolated Formatting**: Separates data retrieval from JSON building for 100% test coverage of financial logic.
 - **Zero Dependencies**: Pure Java implementation for maximum compatibility and security.
+
+---
+
+## ⚖️ License
+This project is licensed under the MIT License.

@@ -53,25 +53,32 @@ public class GetSecurityPerformanceTool implements McpTool {
         int today = DateUtil.getToday();
 
         // 1. Transaction History
+        com.infinitekind.moneydance.model.TxnSearch securitySearch = new com.infinitekind.moneydance.model.TxnSearch() {
+            @Override
+            public boolean matches(com.infinitekind.moneydance.model.Txn txn) {
+                if (!(txn instanceof AbstractTxn)) return false;
+                AbstractTxn at = (AbstractTxn) txn;
+                if (!security.equals(at.getAccount().getCurrencyType())) return false;
+                if (accountId != null && !at.getAccount().getUUID().equals(accountId)) return false;
+                return true;
+            }
+            @Override
+            public boolean matchesAll() { return false; }
+        };
+
         JsonArrayBuilder historyArray = new JsonArrayBuilder();
-        TransactionSet txns = book.getTransactionSet();
-        java.util.Iterator<AbstractTxn> it = txns.iterator();
         long totalShares = 0;
         
-        while (it.hasNext()) {
-            AbstractTxn txn = it.next();
-            if (security.equals(txn.getAccount().getCurrencyType())) {
-                if (accountId != null && !txn.getAccount().getUUID().equals(accountId)) continue;
-                
-                totalShares += txn.getValue();
-                double price = 1.0 / security.getRelativeRate(txn.getDateInt());
-                
-                historyArray.addObject(SecurityPerformanceFormatter.formatTransaction(
-                    DateUtil.encodeIsoDate(txn.getDateInt()),
-                    txn.getDescription(),
-                    security.formatSemiFancy(txn.getValue(), '.'),
-                    String.valueOf(price)));
-            }
+        com.infinitekind.moneydance.model.TxnSet securityTxns = book.getTransactionSet().getTransactions(securitySearch);
+        for (AbstractTxn txn : securityTxns) {
+            totalShares += txn.getValue();
+            double price = 1.0 / security.getRelativeRate(txn.getDateInt());
+            
+            historyArray.addObject(SecurityPerformanceFormatter.formatTransaction(
+                DateUtil.encodeIsoDate(txn.getDateInt()),
+                txn.getDescription(),
+                security.formatSemiFancy(txn.getValue(), '.'),
+                String.valueOf(price)));
         }
 
         double currentPrice = 1.0 / security.getRelativeRate(today);
@@ -85,25 +92,6 @@ public class GetSecurityPerformanceTool implements McpTool {
             historyArray);
     }
 
-    private void addHoldings(Account parent, CurrencyType security, CurrencyType base, int date, JsonArrayBuilder array) {
-        for (int i = 0; i < parent.getSubAccountCount(); i++) {
-            Account acct = parent.getSubAccount(i);
-            if (acct.getAccountType() == Account.AccountType.SECURITY && acct.getCurrencyType().equals(security)) {
-                long shares = acct.getBalance();
-                if (shares != 0) {
-                    double currentPrice = 1.0 / security.getRelativeRate(date);
-                    long totalValueBase = CurrencyUtil.convertValue(shares, security, base, date);
-
-                    array.addObject(new JsonObjectBuilder()
-                        .put("account_name", acct.getParentAccount().getFullAccountName())
-                        .put("shares", security.formatSemiFancy(shares, '.'))
-                        .put("current_price", currentPrice)
-                        .put("total_value_base", CurrencyFormatter.toDecimal(totalValueBase, base)));
-                }
-            }
-            addHoldings(acct, security, base, date, array);
-        }
-    }
 
     private CurrencyType findSecurity(AccountBook book, String ticker, String id) {
         CurrencyTable table = book.getCurrencies();

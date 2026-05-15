@@ -67,19 +67,22 @@ public class GetTransactionsTool implements McpTool {
             }
         }
 
+        com.infinitekind.moneydance.model.DateRange range = 
+            new com.infinitekind.moneydance.model.DateRange(startDate, endDate);
+        
+        com.infinitekind.moneydance.model.TxnSearch search = 
+            com.infinitekind.moneydance.model.TxnUtil.getSearch(range);
+
         JsonArrayBuilder txnsArray = new JsonArrayBuilder();
         int count = 0;
 
         TransactionSet txnSet = book.getTransactionSet();
-        // Fallback to full scan - TODO: Optimize with indexed lookup if possible in this MD version
-        Iterator<AbstractTxn> it = txnSet.iterator();
+        com.infinitekind.moneydance.model.TxnSet txns = txnSet.getTransactions(search);
 
-        while (it.hasNext() && count < MAX_TRANSACTIONS) {
-            AbstractTxn txn = it.next();
+        for (AbstractTxn txn : txns) {
+            if (count >= MAX_TRANSACTIONS) break;
             
-            // Filters
-            if (txn.getDateInt() < startDate || txn.getDateInt() > endDate) continue;
-            
+            // Account filter (including descendants)
             if (accountIds != null && !accountIds.contains(txn.getAccount().getUUID())) {
                 continue;
             }
@@ -123,7 +126,6 @@ public class GetTransactionsTool implements McpTool {
                 ParentTxn p = (ParentTxn) txn;
                 txnObj.put("payee", p.getDescription());
                 txnObj.put("memo", p.getMemo());
-                // For ParentTxn, the category is the first split's account (simplified)
                 if (p.getSplitCount() > 0) {
                     txnObj.put("category", p.getSplit(0).getAccount().getFullAccountName());
                 }

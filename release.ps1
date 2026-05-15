@@ -1,4 +1,4 @@
-# Moneydance MCP Release Automator
+﻿# Moneydance MCP Release Automator
 # Usage: .\release.ps1 [-Version 0.2.0] [-Summary "Custom notes"]
 
 param(
@@ -11,13 +11,16 @@ if (!($Version)) {
 }
 $tagName = "v$Version"
 
+# Ensure UTF-8 for emojis
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+
 $changelogPath = "CHANGELOG.md"
 if (!(Test-Path $changelogPath)) {
     Write-Host "`n[ERROR] $changelogPath not found!" -ForegroundColor Red
     exit
 }
 
-$changelogContent = Get-Content $changelogPath -Raw
+$changelogContent = Get-Content $changelogPath -Raw -Encoding UTF8
 # Regex to extract the section for the current version: ## [0.2.0] ... up to the next ## or end of file
 $pattern = "(?s)## \[$Version\].*?(?=\n## |$)"
 if ($changelogContent -match $pattern) {
@@ -54,21 +57,21 @@ if ($LASTEXITCODE -ne 0) { Write-Host "`n[ERROR] Pushing code/tags failed!" -For
 
 Write-Host "`n[4/4] Creating GitHub Release and uploading assets..." -ForegroundColor Cyan
 $notes = @"
-### 🚀 Welcome to the Moneydance MCP Bridge ($tagName)
+### ðŸš€ Welcome to the Moneydance MCP Bridge ($tagName)
 
 This release enables AI agents to securely interact with your Moneydance financial data.
 
-#### 📖 Getting Started
+#### ðŸ“– Getting Started
 - **[User Guide](https://github.com/Spotlight250/md-mcp/blob/main/docs/user-guide.md)**: Installation and configuration instructions.
 - **[Privacy & Security](https://github.com/Spotlight250/md-mcp/blob/main/docs/user-guide.md#-privacy--security)**: Learn how your data is handled.
 
-#### ✨ What's Changed
+#### âœ¨ What's Changed
 $finalSummary
 
 ---
 See the full **[Changelog](https://github.com/Spotlight250/md-mcp/blob/main/CHANGELOG.md)** for details on all versions.
 
-#### 📦 Included Assets
+#### ðŸ“¦ Included Assets
 - **mcpserver.mxt**: The Moneydance extension.
 - **subscription-finder.zip**: AI Skill package for auditing recurring payments.
 "@

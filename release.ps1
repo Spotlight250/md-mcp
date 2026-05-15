@@ -21,7 +21,7 @@ Write-Host "`n[3/4] Tagging and pushing source code..." -ForegroundColor Cyan
 git add .
 git commit -m "release: $tagName"
 git tag $tagName
-git push origin master --tags
+git push origin main --tags
 
 Write-Host "`n[4/4] DONE!" -ForegroundColor Green
 Write-Host "--------------------------------------------------"

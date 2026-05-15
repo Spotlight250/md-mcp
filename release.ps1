@@ -26,7 +26,6 @@ git push origin main --tags
 Write-Host "`n[4/4] Creating GitHub Release and uploading assets..." -ForegroundColor Cyan
 gh release create $tagName `
     "plugin/dist/mcpserver.mxt#Moneydance Extension (.mxt)" `
-    "client/src/mcp-proxy.mjs#Bridge Proxy Script (.mjs)" `
     "skills/dist/subscription-finder.zip#Subscription Finder Skill (.zip)" `
     --title "Release $tagName" `
     --notes "Moneydance MCP Bridge Release $tagName"

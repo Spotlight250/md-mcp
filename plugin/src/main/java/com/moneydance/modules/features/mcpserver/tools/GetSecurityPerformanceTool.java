@@ -46,7 +46,7 @@ public class GetSecurityPerformanceTool implements McpTool {
         String securityId = JsonParser.getString(paramsJson, "security_id");
         String accountId = JsonParser.getString(paramsJson, "account_id");
 
-        CurrencyType security = findSecurity(book, ticker, securityId);
+        CurrencyType security = com.moneydance.modules.features.mcpserver.utils.SecurityHelper.findSecurity(book, ticker, securityId);
         if (security == null) return errorResponse("Security not found");
 
         CurrencyType base = book.getCurrencies().getBaseType();
@@ -93,26 +93,5 @@ public class GetSecurityPerformanceTool implements McpTool {
     }
 
 
-    private CurrencyType findSecurity(AccountBook book, String ticker, String id) {
-        CurrencyTable table = book.getCurrencies();
-        if (id != null) {
-            return table.getCurrencyByIDString(id);
-        }
-        for (CurrencyType curr : table.getAllCurrencies()) {
-            if (ticker.equalsIgnoreCase(curr.getTickerSymbol())) {
-                return curr;
-            }
-        }
-        return null;
-    }
 
-    private String errorResponse(String message) {
-        return new JsonObjectBuilder()
-            .putArray("content", new JsonArrayBuilder()
-                .addObject(new JsonObjectBuilder()
-                    .put("type", "text")
-                    .put("text", "Error: " + message)))
-            .put("isError", true)
-            .build();
-    }
 }

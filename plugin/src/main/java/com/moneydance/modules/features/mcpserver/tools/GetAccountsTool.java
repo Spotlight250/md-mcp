@@ -79,13 +79,4 @@ public class GetAccountsTool implements McpTool {
                com.moneydance.modules.features.mcpserver.utils.AccountHelper.isLiability(acct);
     }
 
-    private String errorResponse(String message) {
-        return new JsonObjectBuilder()
-            .putArray("content", new JsonArrayBuilder()
-                .addObject(new JsonObjectBuilder()
-                    .put("type", "text")
-                    .put("text", "Error: " + message)))
-            .put("isError", true)
-            .build();
-    }
 }

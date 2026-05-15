@@ -52,13 +52,4 @@ public class GetCurrenciesTool implements McpTool {
         return CurrencyFormatter.formatResponse(currenciesArray);
     }
 
-    private String errorResponse(String message) {
-        return new JsonObjectBuilder()
-            .putArray("content", new JsonArrayBuilder()
-                .addObject(new JsonObjectBuilder()
-                    .put("type", "text")
-                    .put("text", "Error: " + message)))
-            .put("isError", true)
-            .build();
-    }
 }

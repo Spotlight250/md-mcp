@@ -6,7 +6,7 @@ import com.moneydance.modules.features.mcpserver.json.JsonObjectBuilder;
 public class InvestmentFormatter {
     public static JsonObjectBuilder formatInvestment(String accountId, String accountName, String ticker, 
                                         String securityName, String quantity, double price, 
-                                        long totalValue, String currency) {
+                                        double totalValue, String currency) {
         return new JsonObjectBuilder()
             .put("account_id", accountId)
             .put("account_name", accountName)

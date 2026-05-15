@@ -83,9 +83,9 @@ public class GetNetWorthTool implements McpTool {
 
         String resultJson = new JsonObjectBuilder()
             .put("date", mdDate > 0 ? DateUtil.encodeIsoDate(mdDate) : "current")
-            .put("total_assets", totalAssets)
-            .put("total_liabilities", totalLiabilities)
-            .put("net_worth", totalAssets + totalLiabilities) // Liabilities are negative in MD
+            .put("total_assets", CurrencyFormatter.toDecimal(totalAssets, base))
+            .put("total_liabilities", CurrencyFormatter.toDecimal(totalLiabilities, base))
+            .put("net_worth", CurrencyFormatter.toDecimal(totalAssets + totalLiabilities, base)) // Liabilities are negative in MD
             .put("currency", base.getIDString())
             .build();
 

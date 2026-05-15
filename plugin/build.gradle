@@ -31,6 +31,10 @@ dependencies {
     // Testing dependencies
     testImplementation platform('org.junit:junit-bom:5.10.0')
     testImplementation 'org.junit.jupiter:junit-jupiter'
+    testImplementation files(
+        'lib/moneydance-devkit-5.1/lib/moneydance-dev.jar',
+        'lib/moneydance-devkit-5.1/lib/extadmin.jar'
+    )
 }
 
 test {

@@ -29,12 +29,14 @@ public class Main extends FeatureModule {
         // Register a toolbar feature so users can manually trigger the server
         FeatureModuleContext context = getContext();
         try {
-            context.registerFeature(this, "toggleserver", null, EXTN_NAME);
+            context.registerFeature(this, "toggleserver", null, "AI Agent Bridge (MCP)");
         } catch (Exception e) {
             log("Failed to register feature: " + e.getMessage());
         }
 
         serverManager = new McpServerManager(this);
+        // Start the server immediately so it's ready for AI agents
+        serverManager.start();
     }
 
     @Override
@@ -45,6 +47,15 @@ public class Main extends FeatureModule {
             case "md:file:opened":
                 // Data file is now open — start the MCP server
                 serverManager.start();
+                // Automatically ensure bridge script is deployed
+                new Thread(() -> {
+                    try {
+                        BridgeManager bm = new BridgeManager();
+                        bm.deployBridge();
+                    } catch (Exception e) {
+                        log("Auto-bridge deployment failed: " + e.getMessage());
+                    }
+                }).start();
                 break;
 
             case "md:file:closing":
@@ -69,11 +80,10 @@ public class Main extends FeatureModule {
         log("Invoked with command: " + command);
 
         if ("toggleserver".equals(command)) {
-            if (serverManager.isRunning()) {
-                serverManager.stop();
-            } else {
-                serverManager.start();
-            }
+            // Force start server if it's not already running
+            serverManager.start();
+            McpSettingsWindow settings = new McpSettingsWindow();
+            settings.setVisible(true);
         }
     }
 

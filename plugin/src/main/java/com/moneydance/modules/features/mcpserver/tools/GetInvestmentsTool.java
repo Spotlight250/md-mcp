@@ -62,7 +62,7 @@ public class GetInvestmentsTool implements McpTool {
                         security.getName(),
                         security.formatSemiFancy(shares, '.'),
                         currentPrice,
-                        totalValueBase,
+                        CurrencyFormatter.toDecimal(totalValueBase, base),
                         base.getIDString()));
                 }
             }

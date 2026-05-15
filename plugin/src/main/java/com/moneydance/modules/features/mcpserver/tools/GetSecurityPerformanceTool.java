@@ -98,7 +98,7 @@ public class GetSecurityPerformanceTool implements McpTool {
                         .put("account_name", acct.getParentAccount().getFullAccountName())
                         .put("shares", security.formatSemiFancy(shares, '.'))
                         .put("current_price", currentPrice)
-                        .put("total_value_base", totalValueBase));
+                        .put("total_value_base", CurrencyFormatter.toDecimal(totalValueBase, base)));
                 }
             }
             addHoldings(acct, security, base, date, array);

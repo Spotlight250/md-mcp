@@ -13,6 +13,11 @@ public class CurrencyFormatter {
             .put("is_base", isBase);
     }
     
+    public static double toDecimal(long value, com.infinitekind.moneydance.model.CurrencyType type) {
+        if (type == null) return value / 100.0;
+        return type.getDoubleValue(value);
+    }
+
     public static String formatResponse(JsonArrayBuilder currencies) {
         return new JsonObjectBuilder()
             .putArray("content", new JsonArrayBuilder()

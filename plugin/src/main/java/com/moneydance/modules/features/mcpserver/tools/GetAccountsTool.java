@@ -60,8 +60,8 @@ public class GetAccountsTool implements McpTool {
                     .put("id", acct.getUUID())
                     .put("name", acct.getFullAccountName())
                     .put("type", acct.getAccountType().name())
-                    .put("balance", balance)
-                    .put("balance_base", balanceBase)
+                    .put("balance", CurrencyFormatter.toDecimal(balance, acct.getCurrencyType()))
+                    .put("balance_base", CurrencyFormatter.toDecimal(balanceBase, base))
                     .put("currency", acct.getCurrencyType().getIDString())
                     .put("is_inactive", acct.getAccountIsInactive())
                     .put("is_hidden", acct.getHideOnHomePage());

@@ -115,7 +115,7 @@ public class GetTransactionsTool implements McpTool {
             JsonObjectBuilder txnObj = new JsonObjectBuilder()
                 .put("id", txn.getUUID())
                 .put("date", DateUtil.encodeIsoDate(txn.getDateInt()))
-                .put("amount", txn.getValue())
+                .put("amount", CurrencyFormatter.toDecimal(txn.getValue(), txn.getAccount().getCurrencyType()))
                 .put("account", txn.getAccount().getFullAccountName())
                 .put("account_id", txn.getAccount().getUUID());
 

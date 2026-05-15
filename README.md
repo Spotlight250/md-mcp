@@ -42,9 +42,11 @@ The project consists of two main components:
 
 ## 🏗 Technical Excellence
 
-- **Custom JSON Infrastructure**: A ground-up recursive descent parser ensures stability within the Moneydance classloader.
+- **Hardened JSON Infrastructure**: A ground-up recursive descent parser ensures stability within the Moneydance classloader.
+- **Zero-Dependency Proxy**: A standalone Node.js bridge that requires no installation or `npm install`.
+- **Zero-Friction Deployment**: Automated bridge script extraction and configuration dashboard.
 - **Isolated Formatting**: Separates data retrieval from JSON building for 100% test coverage of financial logic.
-- **Zero Dependencies**: Pure Java implementation for maximum compatibility and security.
+- **Zero Dependencies (Java)**: Pure Java implementation for maximum compatibility and security.
 
 ---
 

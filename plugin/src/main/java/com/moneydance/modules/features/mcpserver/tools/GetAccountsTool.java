@@ -36,25 +36,15 @@ public class GetAccountsTool implements McpTool {
         int today = com.moneydance.modules.features.mcpserver.utils.DateUtil.getToday();
 
         JsonArrayBuilder accountsArray = new JsonArrayBuilder();
-        addAccountsRecursively(book.getRootAccount(), base, today, accountsArray);
+        com.infinitekind.moneydance.model.AccountIterator it = 
+            new com.infinitekind.moneydance.model.AccountIterator(book.getRootAccount());
 
-        return new JsonObjectBuilder()
-            .putArray("content", new JsonArrayBuilder()
-                .addObject(new JsonObjectBuilder()
-                    .put("type", "text")
-                    .put("text", accountsArray.build())))
-            .put("isError", false)
-            .build();
-    }
-
-    private void addAccountsRecursively(Account parent, com.infinitekind.moneydance.model.CurrencyType base, int date, JsonArrayBuilder array) {
-        for (int i = 0; i < parent.getSubAccountCount(); i++) {
-            Account acct = parent.getSubAccount(i);
-            
+        while (it.hasNext()) {
+            Account acct = it.next();
             if (isBalanceAccount(acct)) {
                 long balance = acct.getBalance();
                 long balanceBase = com.infinitekind.moneydance.model.CurrencyUtil.convertValue(
-                    balance, acct.getCurrencyType(), base, date);
+                    balance, acct.getCurrencyType(), base, today);
 
                 JsonObjectBuilder acctObj = new JsonObjectBuilder()
                     .put("id", acct.getUUID())
@@ -67,15 +57,22 @@ public class GetAccountsTool implements McpTool {
                     .put("is_hidden", acct.getHideOnHomePage());
                 
                 if (acct.getAccountType() == Account.AccountType.SECURITY) {
-                    acctObj.put("shares", balance); // For securities, balance IS the share count
+                    acctObj.put("shares", balance);
                 }
                 
-                array.addObject(acctObj);
+                accountsArray.addObject(acctObj);
             }
-            
-            addAccountsRecursively(acct, base, date, array);
         }
+
+        return new JsonObjectBuilder()
+            .putArray("content", new JsonArrayBuilder()
+                .addObject(new JsonObjectBuilder()
+                    .put("type", "text")
+                    .put("text", accountsArray.build())))
+            .put("isError", false)
+            .build();
     }
+
 
     private boolean isBalanceAccount(Account acct) {
         return com.moneydance.modules.features.mcpserver.utils.AccountHelper.isAsset(acct) ||

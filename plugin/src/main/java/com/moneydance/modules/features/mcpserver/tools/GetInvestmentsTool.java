@@ -39,23 +39,19 @@ public class GetInvestmentsTool implements McpTool {
         int today = com.moneydance.modules.features.mcpserver.utils.DateUtil.getToday();
 
         JsonArrayBuilder investmentsArray = new JsonArrayBuilder();
-        findInvestments(book.getRootAccount(), base, today, investmentsArray);
+        com.infinitekind.moneydance.model.AccountIterator it = 
+            new com.infinitekind.moneydance.model.AccountIterator(book.getRootAccount());
 
-        return InvestmentFormatter.formatResponse(investmentsArray);
-    }
-
-    private void findInvestments(Account parent, CurrencyType base, int date, JsonArrayBuilder array) {
-        for (int i = 0; i < parent.getSubAccountCount(); i++) {
-            Account acct = parent.getSubAccount(i);
-            
+        while (it.hasNext()) {
+            Account acct = it.next();
             if (acct.getAccountType() == Account.AccountType.SECURITY) {
                 long shares = acct.getBalance();
                 if (shares != 0) {
                     CurrencyType security = acct.getCurrencyType();
-                    double currentPrice = 1.0 / security.getRelativeRate(date);
-                    long totalValueBase = CurrencyUtil.convertValue(shares, security, base, date);
+                    double currentPrice = 1.0 / security.getRelativeRate(today);
+                    long totalValueBase = CurrencyUtil.convertValue(shares, security, base, today);
 
-                    array.addObject(InvestmentFormatter.formatInvestment(
+                    investmentsArray.addObject(InvestmentFormatter.formatInvestment(
                         acct.getUUID(),
                         acct.getFullAccountName(),
                         security.getTickerSymbol(),
@@ -66,10 +62,11 @@ public class GetInvestmentsTool implements McpTool {
                         base.getIDString()));
                 }
             }
-            
-            findInvestments(acct, base, date, array);
         }
+
+        return InvestmentFormatter.formatResponse(investmentsArray);
     }
+
 
     private String errorResponse(String message) {
         return new JsonObjectBuilder()

@@ -28,31 +28,16 @@ public class GetCategoriesTool implements McpTool {
 
     @Override
     public String execute(String paramsJson, FeatureModuleContext ctx) {
-        if (ctx == null) {
-            return errorResponse("Moneydance context not available");
-        }
-
+        if (ctx == null) return errorResponse("Moneydance context not available");
         AccountBook book = ctx.getCurrentAccountBook();
-        if (book == null) {
-            return errorResponse("No data file open");
-        }
+        if (book == null) return errorResponse("No data file open");
 
         JsonArrayBuilder categoriesArray = new JsonArrayBuilder();
-        addCategoriesRecursively(book.getRootAccount(), categoriesArray);
+        com.infinitekind.moneydance.model.AccountIterator it = 
+            new com.infinitekind.moneydance.model.AccountIterator(book.getRootAccount());
 
-        return new JsonObjectBuilder()
-            .putArray("content", new JsonArrayBuilder()
-                .addObject(new JsonObjectBuilder()
-                    .put("type", "text")
-                    .put("text", categoriesArray.build())))
-            .put("isError", false)
-            .build();
-    }
-
-    private void addCategoriesRecursively(Account parent, JsonArrayBuilder array) {
-        for (int i = 0; i < parent.getSubAccountCount(); i++) {
-            Account acct = parent.getSubAccount(i);
-            
+        while (it.hasNext()) {
+            Account acct = it.next();
             if (isCategory(acct)) {
                 JsonObjectBuilder catObj = new JsonObjectBuilder()
                     .put("id", acct.getUUID())
@@ -65,12 +50,19 @@ public class GetCategoriesTool implements McpTool {
                     catObj.put("parent_id", parentAcct.getUUID());
                 }
                 
-                array.addObject(catObj);
+                categoriesArray.addObject(catObj);
             }
-            
-            addCategoriesRecursively(acct, array);
         }
+
+        return new JsonObjectBuilder()
+            .putArray("content", new JsonArrayBuilder()
+                .addObject(new JsonObjectBuilder()
+                    .put("type", "text")
+                    .put("text", categoriesArray.build())))
+            .put("isError", false)
+            .build();
     }
+
 
     private boolean isCategory(Account acct) {
         Account.AccountType type = acct.getAccountType();

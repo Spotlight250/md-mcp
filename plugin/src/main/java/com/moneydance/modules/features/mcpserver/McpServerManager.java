@@ -144,10 +144,11 @@ public class McpServerManager {
     }
 
     private void handleClient(Socket socket) {
-        try (socket;
-             InputStream is = socket.getInputStream();
-             OutputStream os = socket.getOutputStream();
-             BufferedReader reader = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8))) {
+        try (socket) {
+            socket.setSoTimeout(5000); // 5s timeout to prevent hung threads
+            try (InputStream is = socket.getInputStream();
+                 OutputStream os = socket.getOutputStream();
+                 BufferedReader reader = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8))) {
 
             // 1. Read Request Line
             String requestLine = reader.readLine();
@@ -207,7 +208,7 @@ public class McpServerManager {
                 if (r == -1) break;
                 read += r;
             }
-            String requestBody = new String(bodyChars);
+            String requestBody = new String(bodyChars, 0, read);
 
             McpLogger.log("Request: " + requestBody);
 
@@ -219,6 +220,7 @@ public class McpServerManager {
             // 7. Send Response
             sendResponse(os, 200, "OK", "application/json", responseBody);
 
+            }
         } catch (Exception e) {
             McpLogger.log("Error handling client request: " + e.getMessage());
         }

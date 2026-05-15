@@ -10,7 +10,10 @@ import com.moneydance.modules.features.mcpserver.json.JsonParser;
 import com.moneydance.modules.features.mcpserver.utils.DateUtil;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.Map;
 
 /**
  * Implementation of the 'get_net_worth' tool.
@@ -48,7 +51,7 @@ public class GetNetWorthTool implements McpTool {
         int mdDate = isoDate != null ? DateUtil.decodeIsoDate(isoDate) : 0;
         
         String accountIdsJson = JsonParser.getValue(paramsJson, "account_ids");
-        List<String> targetIds = parseIdList(accountIdsJson);
+        Set<String> targetIds = parseIdList(accountIdsJson);
 
         long totalAssets = 0;
         long totalLiabilities = 0;
@@ -95,7 +98,7 @@ public class GetNetWorthTool implements McpTool {
             .build();
     }
 
-    private void findAccounts(Account parent, List<String> targetIds, boolean includeAll, List<Account> results) {
+    private void findAccounts(Account parent, Set<String> targetIds, boolean includeAll, List<Account> results) {
         for (int i = 0; i < parent.getSubAccountCount(); i++) {
             Account acct = parent.getSubAccount(i);
             boolean match = includeAll || targetIds == null || targetIds.isEmpty() || targetIds.contains(acct.getUUID());
@@ -120,18 +123,14 @@ public class GetNetWorthTool implements McpTool {
         return com.moneydance.modules.features.mcpserver.utils.AccountHelper.isLiability(acct);
     }
 
-    private List<String> parseIdList(String jsonArray) {
-        if (jsonArray == null || !jsonArray.startsWith("[")) return null;
-        List<String> ids = new ArrayList<>();
-        // Very naive array parsing: ["id1","id2"]
-        String inner = jsonArray.substring(1, jsonArray.length() - 1);
-        if (inner.isEmpty()) return ids;
-        String[] parts = inner.split(",");
-        for (String p : parts) {
-            String id = p.trim();
-            if (id.startsWith("\"") && id.endsWith("\"")) {
-                ids.add(id.substring(1, id.length() - 1));
-            }
+    private Set<String> parseIdList(String jsonArray) {
+        if (jsonArray == null || jsonArray.trim().isEmpty()) return null;
+        Object parsed = JsonParser.parse(jsonArray);
+        if (!(parsed instanceof List)) return null;
+        
+        Set<String> ids = new HashSet<>();
+        for (Object item : (List<?>) parsed) {
+            ids.add(String.valueOf(item));
         }
         return ids;
     }

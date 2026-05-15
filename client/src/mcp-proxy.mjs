@@ -1,7 +1,7 @@
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 
-import { ListToolsRequestSchema, CallToolRequestSchema } from "@modelcontextprotocol/sdk/types.js";
+import { ListToolsRequestSchema, CallToolRequestSchema, ListResourcesRequestSchema, ReadResourceRequestSchema } from "@modelcontextprotocol/sdk/types.js";
 
 const MONEYDANCE_URL = process.argv[2] || 'http://127.0.0.1:38867/mcp';
 
@@ -13,22 +13,32 @@ class MoneydanceProxyServer {
     constructor() {
         this.server = new Server(
             { name: "moneydance-proxy", version: "1.0.0" },
-            { capabilities: { tools: {} } }
+            { capabilities: { tools: {}, resources: {} } }
         );
 
         // Forward ListToolsRequest
         this.server.setRequestHandler(ListToolsRequestSchema, async () => {
-            const result = await this.forwardRequest('tools/list', {});
-            return result;
+            return await this.forwardRequest('tools/list', {});
         });
 
         // Forward CallToolRequest
         this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
-            const result = await this.forwardRequest('tools/call', {
+            return await this.forwardRequest('tools/call', {
                 name: request.params.name,
                 arguments: request.params.arguments
             });
-            return result;
+        });
+
+        // Forward ListResourcesRequest
+        this.server.setRequestHandler(ListResourcesRequestSchema, async () => {
+            return await this.forwardRequest('resources/list', {});
+        });
+
+        // Forward ReadResourceRequest
+        this.server.setRequestHandler(ReadResourceRequestSchema, async (request) => {
+            return await this.forwardRequest('resources/read', {
+                uri: request.params.uri
+            });
         });
     }
 
@@ -45,6 +55,13 @@ class MoneydanceProxyServer {
                 })
             });
             
+            if (!response.ok) {
+                if (response.status === 413) {
+                    throw new Error("Payload too large (limit is 1MB)");
+                }
+                throw new Error(`HTTP Error ${response.status}: ${response.statusText}`);
+            }
+
             const data = await response.json();
             
             if (data.error) {
@@ -52,10 +69,11 @@ class MoneydanceProxyServer {
             }
             return data.result;
         } catch (err) {
-            return {
-                content: [{ type: "text", text: `Proxy Error: ${err.message}` }],
-                isError: true
-            };
+            console.error(`[Proxy Error] ${err.message}`);
+            if (err.cause && err.cause.code === 'ECONNREFUSED') {
+                throw new Error("Moneydance MCP Server is not running. Please open Moneydance and ensure the extension is loaded.");
+            }
+            throw err;
         }
     }
 

@@ -27,3 +27,8 @@ Thumbs.db
 
 # Java
 *.class
+
+# Debug and Generated
+auth_debug.txt
+plugin/signature.dict
+plugin/s-*.mxt

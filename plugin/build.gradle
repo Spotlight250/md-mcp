@@ -116,3 +116,8 @@ task buildExtension(dependsOn: signExt) {
 
 // Default build task also creates the mxt
 build.dependsOn mxt
+
+// Ensure clean task also wipes the dist folder
+clean.doFirst {
+    delete file("${projectDir}/dist")
+}

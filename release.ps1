@@ -6,7 +6,7 @@ $tagName = "v$version"
 
 Write-Host "`n[1/3] Building and signing Moneydance extension..." -ForegroundColor Cyan
 cd plugin
-.\gradlew.bat signExt
+.\gradlew.bat clean signExt
 if ($LASTEXITCODE -ne 0) { Write-Host "Build failed!" -ForegroundColor Red; exit }
 cd ..
 

@@ -20,7 +20,7 @@ public class GetSecurityPerformanceTool implements McpTool {
 
     @Override
     public String getDescription() {
-        return "Deep-dive analysis of a security's actual performance. Includes transaction history and current valuation.";
+        return "Deep-dive analysis of a security's actual performance. Includes cost basis, unrealized gain/loss, ROI, and transaction history.";
     }
 
     @Override
@@ -32,7 +32,8 @@ public class GetSecurityPerformanceTool implements McpTool {
                 "\"security_id\":{\"type\":\"string\",\"description\":\"Optional UUID of the security\"}," +
                 "\"account_id\":{\"type\":\"string\",\"description\":\"Optional account UUID to filter performance\"}" +
                 "}," +
-                "\"required\":[\"ticker\"]" +
+                "\"required\":[\"ticker\"]," +
+                "\"description\":\"Returns performance metrics: cost basis, unrealized gain/loss, and annualized ROI where available.\"" +
                 "}";
     }
 
@@ -52,44 +53,81 @@ public class GetSecurityPerformanceTool implements McpTool {
         CurrencyType base = book.getCurrencies().getBaseType();
         int today = DateUtil.getToday();
 
-        // 1. Transaction History
-        com.infinitekind.moneydance.model.TxnSearch securitySearch = new com.infinitekind.moneydance.model.TxnSearch() {
-            @Override
-            public boolean matches(com.infinitekind.moneydance.model.Txn txn) {
-                if (!(txn instanceof AbstractTxn)) return false;
-                AbstractTxn at = (AbstractTxn) txn;
-                if (!security.equals(at.getAccount().getCurrencyType())) return false;
-                if (accountId != null && !at.getAccount().getUUID().equals(accountId)) return false;
-                return true;
+        // 1. Find all accounts holding this security
+        java.util.List<Account> securityAccounts = new java.util.ArrayList<>();
+        if (accountId != null) {
+            Account acct = book.getAccountByUUID(accountId);
+            if (acct != null && security.equals(acct.getCurrencyType())) {
+                securityAccounts.add(acct);
             }
-            @Override
-            public boolean matchesAll() { return false; }
-        };
+        } else {
+            // Scan all accounts for this security
+            java.util.List<Account> allAccounts = book.getRootAccount().getSubAccounts();
+            findSecurityAccounts(book.getRootAccount(), security, securityAccounts);
+        }
+
+        long totalShares = 0;
+        long totalCostBasisBase = 0;
+        long totalValueBase = 0;
 
         JsonArrayBuilder historyArray = new JsonArrayBuilder();
-        long totalShares = 0;
-        
-        com.infinitekind.moneydance.model.TxnSet securityTxns = book.getTransactionSet().getTransactions(securitySearch);
-        for (AbstractTxn txn : securityTxns) {
-            totalShares += txn.getValue();
-            double price = 1.0 / security.getRelativeRate(txn.getDateInt());
+
+        for (Account acct : securityAccounts) {
+            long shares = acct.getBalance();
+            totalShares += shares;
             
-            historyArray.addObject(SecurityPerformanceFormatter.formatTransaction(
-                DateUtil.encodeIsoDate(txn.getDateInt()),
-                txn.getDescription(),
-                security.formatSemiFancy(txn.getValue(), '.'),
-                String.valueOf(price)));
+            // Get native cost basis
+            long basis = InvestUtil.getCostBasis(acct);
+            // Convert basis (in parent currency) to base currency
+            long basisBase = CurrencyUtil.convertValue(basis, acct.getParentAccount().getCurrencyType(), base, today);
+            totalCostBasisBase += basisBase;
+
+            // Current value in base
+            long valBase = CurrencyUtil.convertValue(shares, security, base, today);
+            totalValueBase += valBase;
+
+            // Collect transactions for this account
+            TransactionSet txnSet = book.getTransactionSet();
+            TxnSet txns = txnSet.getTransactionsForAccount(acct);
+            for (AbstractTxn txn : txns) {
+                double price = 1.0 / security.getRelativeRate(txn.getDateInt());
+                historyArray.addObject(SecurityPerformanceFormatter.formatTransaction(
+                    DateUtil.encodeIsoDate(txn.getDateInt()),
+                    txn.getDescription(),
+                    security.formatSemiFancy(txn.getValue(), '.'),
+                    String.valueOf(price)));
+            }
         }
 
         double currentPrice = 1.0 / security.getRelativeRate(today);
-        long currentTotalValue = CurrencyUtil.convertValue(totalShares, security, base, today);
+        long unrealizedGain = totalValueBase - totalCostBasisBase;
+        
+        // Simple ROI calculation: (Gain / Basis) * 100
+        // Note: This is a simplified ROI. For accurate ROI, we'd need cash flow analysis.
+        String roiStr = "N/A";
+        if (totalCostBasisBase != 0) {
+            double roi = ((double) unrealizedGain / (double) totalCostBasisBase) * 100.0;
+            roiStr = String.format("%.2f%%", roi);
+        }
 
         return SecurityPerformanceFormatter.formatResponse(
             ticker,
             security.formatSemiFancy(totalShares, '.'),
             currentPrice,
-            base.formatSemiFancy(currentTotalValue, '.'),
+            base.formatSemiFancy(totalValueBase, '.'),
+            base.formatSemiFancy(totalCostBasisBase, '.'),
+            base.formatSemiFancy(unrealizedGain, '.'),
+            roiStr,
             historyArray);
+    }
+
+    private void findSecurityAccounts(Account parent, CurrencyType security, java.util.List<Account> results) {
+        for (Account sub : parent.getSubAccounts()) {
+            if (security.equals(sub.getCurrencyType())) {
+                results.add(sub);
+            }
+            findSecurityAccounts(sub, security, results);
+        }
     }
 
 

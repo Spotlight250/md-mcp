@@ -13,7 +13,8 @@ public class SecurityPerformanceFormatter {
     }
     
     public static String formatResponse(String ticker, String totalQuantity, double currentPrice, 
-                                      String currentValue, JsonArrayBuilder history) {
+                                      String currentValue, String costBasis, String unrealizedGain,
+                                      String roi, JsonArrayBuilder history) {
         return new JsonObjectBuilder()
             .putArray("content", new JsonArrayBuilder()
                 .addObject(new JsonObjectBuilder()
@@ -22,6 +23,9 @@ public class SecurityPerformanceFormatter {
                                "Total Quantity: " + totalQuantity + "\n" +
                                "Current Price: " + currentPrice + "\n" +
                                "Current Value: " + currentValue + "\n" +
+                               "Cost Basis: " + costBasis + "\n" +
+                               "Unrealized Gain/Loss: " + unrealizedGain + "\n" +
+                               "ROI: " + roi + "\n" +
                                "Transaction History: " + history.build())))
             .put("isError", false)
             .build();

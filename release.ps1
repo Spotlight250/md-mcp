@@ -23,11 +23,14 @@ git commit -m "release: $tagName"
 git tag $tagName
 git push origin main --tags
 
-Write-Host "`n[4/4] DONE!" -ForegroundColor Green
-Write-Host "--------------------------------------------------"
-Write-Host "Your code is pushed and tagged as $tagName."
-Write-Host "Final Step: Go to GitHub and upload these files to the release:"
-Write-Host "  1. plugin/dist/mcpserver.mxt" -ForegroundColor Yellow
-Write-Host "  2. client/src/mcp-proxy.mjs" -ForegroundColor Yellow
-Write-Host "  3. skills/dist/subscription-finder.zip" -ForegroundColor Yellow
+Write-Host "`n[4/4] Creating GitHub Release and uploading assets..." -ForegroundColor Cyan
+gh release create $tagName `
+    "plugin/dist/mcpserver.mxt#Moneydance Extension (.mxt)" `
+    "client/src/mcp-proxy.mjs#Bridge Proxy Script (.mjs)" `
+    "skills/dist/subscription-finder.zip#Subscription Finder Skill (.zip)" `
+    --title "Release $tagName" `
+    --notes "Moneydance MCP Bridge Release $tagName"
+
+Write-Host "`n[DONE] Release $tagName is live!" -ForegroundColor Green
+Write-Host "View it at: https://github.com/Spotlight250/md-mcp/releases/tag/$tagName"
 Write-Host "--------------------------------------------------"

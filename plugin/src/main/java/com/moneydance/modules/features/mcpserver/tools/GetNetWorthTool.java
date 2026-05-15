@@ -78,6 +78,12 @@ public class GetNetWorthTool implements McpTool {
                     com.infinitekind.moneydance.model.AccountUtil.getBalanceAsOfDate(book, acct, mdDate) : 
                     acct.getBalance();
                 
+                // Sanitize sentinel error values from SDK
+                if (balance == Long.MIN_VALUE) {
+                    McpLogger.log("Warning: Skipping " + acct.getFullAccountName() + " because balance is unavailable for " + (mdDate > 0 ? mdDate : "current date"));
+                    balance = 0;
+                }
+                
                 com.infinitekind.moneydance.model.CurrencyType acctCurrency = acct.getCurrencyType();
                 if (acctCurrency != null) {
                     long valueInBase = com.infinitekind.moneydance.model.CurrencyUtil.convertValue(

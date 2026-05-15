@@ -71,18 +71,18 @@ public class GetAccountsTool implements McpTool {
 
             if (isBalanceAccount(acct)) {
                 long balance;
-                long recursiveBalance;
+                long recursiveBalanceBase;
                 
                 if (isoDate != null || clearedOnly) {
-                    balance = AccountUtil.getBalanceAsOfDate(book, acct, mdDate, clearedOnly);
-                    recursiveBalance = calculateRecursiveBalanceAsOfDate(book, acct, mdDate, clearedOnly);
+                    balance = getSafeBalance(book, acct, mdDate, clearedOnly);
+                    recursiveBalanceBase = calculateRecursiveBalanceBase(book, acct, mdDate, clearedOnly, base);
                 } else {
                     balance = acct.getBalance();
-                    recursiveBalance = acct.getRecursiveBalance();
+                    recursiveBalanceBase = calculateRecursiveBalanceBase(book, acct, DateUtil.getToday(), false, base);
                 }
 
                 long balanceBase = CurrencyUtil.convertValue(balance, acct.getCurrencyType(), base, mdDate);
-                long recursiveBalanceBase = CurrencyUtil.convertValue(recursiveBalance, acct.getCurrencyType(), base, mdDate);
+                long recursiveBalance = CurrencyUtil.convertValue(recursiveBalanceBase, base, acct.getCurrencyType(), mdDate);
 
                 JsonObjectBuilder acctObj = new JsonObjectBuilder()
                     .put("id", acct.getUUID())
@@ -97,6 +97,10 @@ public class GetAccountsTool implements McpTool {
                     .put("is_hidden", acct.getHideOnHomePage())
                     .put("as_of_date", DateUtil.encodeIsoDate(mdDate))
                     .put("cleared_only", clearedOnly);
+                
+                if (AccountUtil.getBalanceAsOfDate(book, acct, mdDate, clearedOnly) == Long.MIN_VALUE) {
+                    acctObj.put("data_quality", "warning: balance unavailable for this date");
+                }
                 
                 Account parent = acct.getParentAccount();
                 if (parent != null && parent.getAccountType() != Account.AccountType.ROOT) {
@@ -120,12 +124,19 @@ public class GetAccountsTool implements McpTool {
             .build();
     }
 
-    private long calculateRecursiveBalanceAsOfDate(AccountBook book, Account root, int date, boolean clearedOnly) {
-        long total = AccountUtil.getBalanceAsOfDate(book, root, date, clearedOnly);
+    private long getSafeBalance(AccountBook book, Account acct, int date, boolean clearedOnly) {
+        long b = AccountUtil.getBalanceAsOfDate(book, acct, date, clearedOnly);
+        return (b == Long.MIN_VALUE) ? 0 : b;
+    }
+
+    private long calculateRecursiveBalanceBase(AccountBook book, Account root, int date, boolean clearedOnly, CurrencyType base) {
+        long balance = getSafeBalance(book, root, date, clearedOnly);
+        long totalBase = CurrencyUtil.convertValue(balance, root.getCurrencyType(), base, date);
+        
         for (int i = 0; i < root.getSubAccountCount(); i++) {
-            total += calculateRecursiveBalanceAsOfDate(book, root.getSubAccount(i), date, clearedOnly);
+            totalBase += calculateRecursiveBalanceBase(book, root.getSubAccount(i), date, clearedOnly, base);
         }
-        return total;
+        return totalBase;
     }
 
 

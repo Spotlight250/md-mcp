@@ -25,16 +25,24 @@ These tools allow the agent to answer basic financial questions.
     - [x] `mcp://moneydance/securities/master`: Security metadata master list (JSON).
 
 ## [ ] Future Roadmap
-> **Security Note:** Write operations are currently disabled by design.
+> **Security Note:** Write operations require explicit user approval and are architected as "Human-in-the-loop."
 
-- [ ] `get_reminders`: Upcoming bill and deposit tracking.
-- [ ] `get_budgets`: Spending vs. Limit analysis.
-- [ ] `prompts/*`: AI-driven workflows (Portfolio Audit, Tax Prep).
-- [ ] `update_transaction`: AI categorization (Opt-in).
+### Phase 3: Data Enrichment & Maintenance
+- [ ] **Security Price Updates**: Tool to push historical/current prices for any security.
+- [ ] **Transaction Tagging**: AI-driven categorization for "Uncategorized" items.
+- [ ] **Memo Cleanup**: Automate the renaming of messy bank descriptions.
+- [ ] **Bill Reminders**: `get_reminders` for upcoming payment tracking.
+- [ ] **Budget Analysis**: `get_budgets` to compare actual spending against limits.
+
+### Phase 4: AI Workflow Primitives
+- [ ] **Prompts Library**: Pre-built AI prompts for "Portfolio Audits" and "Tax Prep."
+- [ ] **Safety Layer**: Implement `resources://pending-changes` to review AI edits before commitment.
+- [ ] **Batch Processing**: Support for multi-transaction categorization in a single approval step.
 
 ---
 
 ## Technical Foundation
 - **Zero-Dependency Java**: Runs in any Moneydance environment (Java 17+).
 - **Formatter-Isolate Pattern**: Business logic is separated from formatting for 100% unit testability.
+- **Hardened JSON Stack**: Custom recursive-descent parser for classloader safety.
 - **JSON-RPC 2.0**: Strict adherence to the MCP specification.

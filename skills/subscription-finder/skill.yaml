@@ -1,0 +1,16 @@
+name: subscription-finder
+description: Audits Moneydance ledgers for recurring subscriptions and price creep.
+version: 1.0.0
+author: md-mcp
+triggers:
+  - "Find my subscriptions"
+  - "What am I paying for every month?"
+  - "Audit my recurring expenses"
+  - "Are there any hidden subscriptions in my bank account?"
+  - "Did any of my bills go up recently?"
+  - "Check for price creep in my monthly payments"
+tools:
+  - name: get_transactions
+    description: Required to fetch historical transaction data.
+  - name: get_categories
+    description: Required to cross-reference payees with account categories.

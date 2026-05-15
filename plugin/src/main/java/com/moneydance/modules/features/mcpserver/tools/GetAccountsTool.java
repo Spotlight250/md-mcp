@@ -20,7 +20,7 @@ public class GetAccountsTool implements McpTool {
 
     @Override
     public String getDescription() {
-        return "Lists all accounts (bank, credit card, investment, loan, asset) with their balances and status. Supports historical dates and balance types.";
+        return "Lists all accounts (bank, credit card, investment, loan, asset) with their balances, status, and metadata (ticker, account number, notes). Supports historical dates and balance types.";
     }
 
     @Override
@@ -32,7 +32,8 @@ public class GetAccountsTool implements McpTool {
                 "\"cleared_only\":{\"type\":\"boolean\",\"description\":\"If true, only includes cleared transactions in the balance calculation. Defaults to false.\"}," +
                 "\"include_inactive\":{\"type\":\"boolean\",\"description\":\"Whether to include inactive accounts. Defaults to true.\"}," +
                 "\"include_hidden\":{\"type\":\"boolean\",\"description\":\"Whether to include hidden accounts. Defaults to true.\"}" +
-                "}" +
+                "}," +
+                "\"description\":\"Returns account details including: id, name, type, balance, balance_base, currency, ticker, account_number, notes, is_inactive, is_hidden.\"" +
                 "}";
     }
 
@@ -98,6 +99,36 @@ public class GetAccountsTool implements McpTool {
                     .put("as_of_date", DateUtil.encodeIsoDate(mdDate))
                     .put("cleared_only", clearedOnly);
                 
+                // --- Phase 1: Metadata Extraction ---
+                CurrencyType curr = acct.getCurrencyType();
+                if (curr != null) {
+                    String ticker = curr.getTickerSymbol();
+                    if (ticker != null && !ticker.trim().isEmpty()) {
+                        acctObj.put("ticker", ticker);
+                    }
+                }
+
+                String notes = acct.getAccountDescription();
+                if (notes != null && !notes.trim().isEmpty()) {
+                    acctObj.put("notes", notes);
+                }
+
+                String acctNum = null;
+                switch (acct.getAccountType()) {
+                    case BANK: acctNum = acct.getBankAccountNumber(); break;
+                    case INVESTMENT: acctNum = acct.getInvestAccountNumber(); break;
+                    case CREDIT_CARD: acctNum = acct.getCardNumber(); break;
+                    case LOAN:
+                    case ASSET:
+                        double rate = acct.getInterestRate();
+                        if (rate != 0) acctObj.put("interest_rate", rate);
+                        break;
+                }
+                if (acctNum != null && !acctNum.trim().isEmpty()) {
+                    acctObj.put("account_number", acctNum);
+                }
+                // ------------------------------------
+
                 if (AccountUtil.getBalanceAsOfDate(book, acct, mdDate, clearedOnly) == Long.MIN_VALUE) {
                     acctObj.put("data_quality", "warning: balance unavailable for this date");
                 }
